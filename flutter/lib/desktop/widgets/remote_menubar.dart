@@ -312,6 +312,42 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
 
   Widget _buildMonitor(BuildContext context) {
     final pi = widget.ffi.ffiModel.pi;
+    final numMonitors = pi.displays.length;
+    return IconButton(
+        tooltip: translate('Select Monitor'),
+        onPressed: () {
+          RxInt display = CurrentDisplayState.find(widget.id);
+          display.value = display.value + 1;
+          if (display.value >= numMonitors) {
+            display.value = 0;
+          }
+          bind.sessionSwitchDisplay(id: widget.id, value: display.value);
+          pi.currentDisplay = display.value;
+        },
+        icon: Stack(
+          alignment: Alignment.center,
+          children: [
+            const Icon(
+              Icons.personal_video,
+              color: _MenubarTheme.commonColor,
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 3.9),
+              child: Obx(() {
+                RxInt display = CurrentDisplayState.find(widget.id);
+                return Text(
+                  '${display.value + 1}/${pi.displays.length}',
+                  style: const TextStyle(
+                      color: _MenubarTheme.commonColor, fontSize: 8),
+                );
+              }),
+            )
+          ],
+        ));
+  }
+
+  /*Widget _buildMonitor(BuildContext context) {
+    final pi = widget.ffi.ffiModel.pi;
     return mod_menu.PopupMenuButton(
       tooltip: translate('Select Monitor'),
       padding: EdgeInsets.zero,
@@ -384,7 +420,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
         ];
       },
     );
-  }
+  }*/
 
   Widget _buildControl(BuildContext context) {
     return mod_menu.PopupMenuButton(

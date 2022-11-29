@@ -255,11 +255,8 @@ class _ConnectionTabPageState extends State<ConnectionTabPage> {
         },
         padding: padding,
       ),
-    ]);
-
-    if (!ffi.canvasModel.cursorEmbeded) {
-      menu.add(MenuEntryDivider<String>());
-      menu.add(() {
+      MenuEntryDivider<String>(),
+      () {
         final state = ShowRemoteCursorState.find(key);
         return MenuEntrySwitch2<String>(
           switchType: SwitchType.scheckbox,
@@ -275,8 +272,8 @@ class _ConnectionTabPageState extends State<ConnectionTabPage> {
           },
           padding: padding,
         );
-      }());
-    }
+      }()
+    ]);
 
     if (perms['keyboard'] != false) {
       if (perms['clipboard'] != false) {

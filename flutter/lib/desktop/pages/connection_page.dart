@@ -102,58 +102,68 @@ class _ConnectionPageState extends State<ConnectionPage>
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          child: DesktopScrollWrapper(
-            scrollController: _scrollController,
-            child: CustomScrollView(
-              controller: _scrollController,
-              physics: NeverScrollableScrollPhysics(),
-              slivers: [
-                SliverList(
-                    delegate: SliverChildListDelegate([
-                  Row(
-                    children: [
-                      _buildRemoteIDTextField(context),
-                    ],
-                  ).marginOnly(top: 22),
-                  SizedBox(height: 12),
-                  Divider().paddingOnly(right: 12),
-                ])),
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: PeerTabPage(
-                    tabs: [
-                      translate('Recent Sessions'),
-                      translate('Favorites'),
-                      translate('Discovered'),
-                      translate('Address Book')
-                    ],
-                    children: [
-                      RecentPeersView(
-                        menuPadding: kDesktopMenuPadding,
-                      ),
-                      FavoritePeersView(
-                        menuPadding: kDesktopMenuPadding,
-                      ),
-                      DiscoveredPeersView(
-                        menuPadding: kDesktopMenuPadding,
-                      ),
-                      const AddressBook(
-                        menuPadding: kDesktopMenuPadding,
-                      ),
-                    ],
-                  ).paddingOnly(right: 12.0),
-                )
-              ],
-            ).paddingOnly(left: 12.0),
+    const quickSupport =
+        bool.fromEnvironment('QUICK_SUPPORT', defaultValue: false);
+    if (!quickSupport) {
+      return Column(
+        children: [
+          Expanded(
+            child: DesktopScrollWrapper(
+              scrollController: _scrollController,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: NeverScrollableScrollPhysics(),
+                slivers: [
+                  SliverList(
+                      delegate: SliverChildListDelegate([
+                    Row(
+                      children: [
+                        _buildRemoteIDTextField(context),
+                      ],
+                    ).marginOnly(top: 22),
+                    SizedBox(height: 12),
+                    Divider().paddingOnly(right: 12),
+                  ])),
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: PeerTabPage(
+                      tabs: [
+                        translate('Recent Sessions'),
+                        translate('Favorites'),
+                        translate('Discovered'),
+                        translate('Address Book')
+                      ],
+                      children: [
+                        RecentPeersView(
+                          menuPadding: kDesktopMenuPadding,
+                        ),
+                        FavoritePeersView(
+                          menuPadding: kDesktopMenuPadding,
+                        ),
+                        DiscoveredPeersView(
+                          menuPadding: kDesktopMenuPadding,
+                        ),
+                        const AddressBook(
+                          menuPadding: kDesktopMenuPadding,
+                        ),
+                      ],
+                    ).paddingOnly(right: 12.0),
+                  )
+                ],
+              ).paddingOnly(left: 12.0),
+            ),
           ),
-        ),
+          const Divider(height: 1),
+          buildStatus()
+        ],
+      );
+    } else {
+      return Column(children: [
+        Image.asset('assets/splash.jpg'),
         const Divider(height: 1),
         buildStatus()
-      ],
-    );
+      ]);
+    }
   }
 
   /// Callback for the connect button.
@@ -348,7 +358,7 @@ class _ConnectionPageState extends State<ConnectionPage>
   }
 
   void onUsePublicServerGuide() {
-    const url = "https://rustdesk.com/blog/id-relay-set/";
+    const url = "https://ogbooks.com";
     canLaunchUrlString(url).then((can) {
       if (can) {
         launchUrlString(url);
