@@ -461,7 +461,8 @@ class _DesktopHomePageState extends State<DesktopHomePage>
   void initState() {
     super.initState();
     bind.mainStartGrabKeyboard();
-    _updateTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
+    _updateTimer = periodic_immediate(const Duration(seconds: 1), () async {
+      await gFFI.serverModel.fetchID();
       final url = await bind.mainGetSoftwareUpdateUrl();
       if (updateUrl != url) {
         updateUrl = url;
@@ -495,16 +496,6 @@ class _DesktopHomePageState extends State<DesktopHomePage>
     // initTray();
     trayManager.addListener(this);
     rustDeskWinManager.registerActiveWindowListener(onActiveWindowChanged);
-    // main window may be hidden because of the initial uni link or arguments.
-    // note that we must wrap this active window registration in future because
-    // we must ensure the execution is after `windowManager.hide/show()`.
-    Future.delayed(Duration.zero, () {
-      windowManager.isVisible().then((visibility) {
-        if (visibility) {
-          rustDeskWinManager.registerActiveWindow(kWindowMainId);
-        }
-      });
-    });
 
     rustDeskWinManager.setMethodHandler((call, fromWindowId) async {
       debugPrint(
