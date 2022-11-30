@@ -39,3 +39,5 @@ flatpak/.flatpak-builder/debian-binary
 flatpak/build/**
 # bridge file
 lib/generated_bridge.dart
+Cargo.toml.bk
+src/main.rs.bk

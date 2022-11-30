@@ -72,7 +72,7 @@ def make_parser():
              'Available: IddDriver, PrivacyMode. Special value is "ALL" and empty "". Default is empty.')
     parser.add_argument('--flutter', action='store_true',
                         help='Build flutter package', default=False)
-    parser.add_argument('--quick-support', action='store_true',
+    parser.add_argument('--quick', action='store_true',
                         help='Build Quick Support package', default=False)
     parser.add_argument(
         '--hwcodec',
@@ -171,7 +171,6 @@ def download_extract_features(features, res_dir):
 
 def get_rc_features(args):
     flutter = args.flutter
-    quick_support = args.quick-support
     features = parse_rc_features(args.feature)
     if not features:
         return []
@@ -205,6 +204,8 @@ def get_features(args):
         features.append('hwcodec')
     if args.flutter:
         features.append('flutter')
+    if args.quick:
+        features.append('quick')
     if args.flatpak:
         features.append('flatpak')
     print("features:", features)
@@ -378,7 +379,7 @@ def main():
     version = get_version()
     features = ','.join(get_features(args))
     flutter = args.flutter
-    quick_support = args.quick-support
+    quick_support = args.quick
     if not flutter:
         os.system('python3 res/inline-sciter.py')
     print(args.skip_cargo)
@@ -392,10 +393,10 @@ def main():
         os.chdir('../../..')
 
         if flutter:
-            build_flutter_windows(version, features)
-            return
-        if quick_support:
-            build_flutter_windows_quick_support(version, features)
+            if quick_support:
+                build_flutter_windows_quick_support(version, features)
+            else:
+                build_flutter_windows(version, features)
             return
         os.system('cargo build --release --features ' + features)
         # os.system('upx.exe target/release/rustdesk.exe')

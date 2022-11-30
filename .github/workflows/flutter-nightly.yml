@@ -95,6 +95,16 @@ jobs:
               mv "$name" "${name%%-install.exe}-${{ matrix.job.target }}.exe"
           done
 
+      - name: Build rustdesk QS
+        run: python3 .\build.py --portable --hwcodec --flutter --quick
+
+      - name: Rename rustdesk QS
+        shell: bash
+        run: |
+          for name in rustdesk*??-install.exe; do
+              mv "$name" "${name%%-install.exe}-${{ matrix.job.target }}QS.exe"
+          done
+
       - name: Publish Release
         uses: softprops/action-gh-release@v1
         with:
