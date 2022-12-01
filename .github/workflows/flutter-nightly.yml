@@ -101,8 +101,8 @@ jobs:
       - name: Rename rustdesk QS
         shell: bash
         run: |
-          for name in rustdesk*??-install.exe; do
-              mv "$name" "${name%%-install.exe}-${{ matrix.job.target }}QS.exe"
+          for name in rustdesk*??-QS.exe; do
+              mv "$name" "${name%%-QS.exe}-${{ matrix.job.target }}QS.exe"
           done
 
       - name: Publish Release
