@@ -616,7 +616,14 @@ packages:
       name: material_color_utilities
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "0.1.4"
+    version: "0.1.5"
+  menu_base:
+    dependency: transitive
+    description:
+      name: menu_base
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.1"
   meta:
     dependency: transitive
     description:
@@ -885,6 +892,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.0.3"
+  shortid:
+    dependency: transitive
+    description:
+      name: shortid
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.2"
   sky_engine:
     dependency: transitive
     description: flutter
@@ -974,6 +988,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.4.0"
+  tray_manager:
+    dependency: "direct main"
+    description:
+      name: tray_manager
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.2.0"
   tuple:
     dependency: "direct main"
     description:
