@@ -236,8 +236,6 @@ def get_features(args):
         features.append('hwcodec')
     if args.flutter:
         features.append('flutter')
-    if args.quick:
-        features.append('quick')
     if args.flatpak:
         features.append('flatpak')
     print("features:", features)
