@@ -397,5 +397,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Request access to your device", "Solicitar acesso ao seu dispositivo"),
         ("Hide connection management window", ""),
         ("hide_cm_tip", ""),
+        ("wayland_experiment_tip", ""),
+        ("Right click to select tabs", ""),
     ].iter().cloned().collect();
 }
