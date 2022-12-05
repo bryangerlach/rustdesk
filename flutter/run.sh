@@ -6,8 +6,4 @@ flutter pub get
 # export LLVM_HOME=/Library/Developer/CommandLineTools/usr/
 #cargo build --features flutter
 cargo build --release --features flutter
-#flutter run $@
-rm -rf build/windows/runner/ReleaseQS
-flutter build windows --dart-define=QUICK_SUPPORT=true
-mv build/windows/runner/Release build/windows/runner/ReleaseQS
-flutter build windows
+flutter run $@
