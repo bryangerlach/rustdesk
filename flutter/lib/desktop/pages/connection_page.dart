@@ -100,10 +100,7 @@ class _ConnectionPageState extends State<ConnectionPage>
 
   @override
   Widget build(BuildContext context) {
-    //const quickSupport =
-    //    bool.fromEnvironment('QUICK_SUPPORT', defaultValue: false);
-    const quickSupport = false;
-    if (!quickSupport) {
+    if (bind.mainIsInstalled()) {
       return Column(
         children: [
           Expanded(

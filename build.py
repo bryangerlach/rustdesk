@@ -83,8 +83,6 @@ def make_parser():
              'Available: IddDriver, PrivacyMode. Special value is "ALL" and empty "". Default is empty.')
     parser.add_argument('--flutter', action='store_true',
                         help='Build flutter package', default=False)
-    parser.add_argument('--quick', action='store_true',
-                        help='Build Quick Support package', default=False)
     parser.add_argument(
         '--hwcodec',
         action='store_true',
@@ -361,35 +359,6 @@ def build_flutter_windows(version, features):
     print(
         f'output location: {os.path.abspath(os.curdir)}/rustdesk-{version}-install.exe')
 
-def build_flutter_windows_quick_support(version, features):
-    if not skip_cargo:
-        os.system(f'cargo build --features {features} --lib --release')
-        if not os.path.exists("target/release/librustdesk.dll"):
-            print("cargo build failed, please check rust source code.")
-            exit(-1)
-    os.chdir('flutter')
-    os.system('flutter build windows --release --dart-define=QUICK_SUPPORT=true')
-    os.chdir('..')
-    shutil.copy2('target/release/deps/dylib_virtual_display.dll',
-                 flutter_win_target_dir)
-    os.chdir('libs/portable')
-    os.system('pip3 install -r requirements.txt')
-    os.system(
-        f'python3 ./generate.py -f ../../{flutter_win_target_dir} -o . -e ../../{flutter_win_target_dir}/rustdesk.exe')
-    os.chdir('../..')
-    if os.path.exists('./rustdesk_portable.exe'):
-        os.replace('./target/release/rustdesk-portable-packer.exe',
-                   './rustdesk_portable.exe')
-    else:
-        os.rename('./target/release/rustdesk-portable-packer.exe',
-                  './rustdesk_portable.exe')
-    print(
-        f'output location: {os.path.abspath(os.curdir)}/rustdesk_portable.exe')
-    os.rename('./rustdesk_portable.exe', f'./rustdesk-{version}-QS.exe')
-    print(
-        f'output location: {os.path.abspath(os.curdir)}/rustdesk-{version}-QS.exe')
-
-
 def main():
     global skip_cargo
     parser = make_parser()
@@ -409,7 +378,6 @@ def main():
     version = get_version()
     features = ','.join(get_features(args))
     flutter = args.flutter
-    quick_support = args.quick
     if not flutter:
         os.system('python3 res/inline-sciter.py')
     print(args.skip_cargo)
@@ -423,10 +391,7 @@ def main():
         os.chdir('../../..')
 
         if flutter:
-            if quick_support:
-                build_flutter_windows_quick_support(version, features)
-            else:
-                build_flutter_windows(version, features)
+            build_flutter_windows(version, features)
             return
         os.system('cargo build --release --features ' + features)
         # os.system('upx.exe target/release/rustdesk.exe')

@@ -125,15 +125,15 @@ jobs:
           folder: './SignOutput'
           recursive: false
 
-      - name: Build rustdesk QS
-        run: python3 .\build.py --portable --hwcodec --flutter --quick
+      # - name: Build rustdesk QS
+      #   run: python3 .\build.py --portable --hwcodec --flutter --quick
 
-      - name: Rename rustdesk QS
-        shell: bash
-        run: |
-          for name in rustdesk*??-QS.exe; do
-              mv "$name" "${name%%-QS.exe}-${{ matrix.job.target }}QS.exe"
-          done
+      # - name: Rename rustdesk QS
+      #   shell: bash
+      #   run: |
+      #     for name in rustdesk*??-QS.exe; do
+      #         mv "$name" "${name%%-QS.exe}-${{ matrix.job.target }}QS.exe"
+      #     done
 
       - name: Publish Release
         uses: softprops/action-gh-release@v1
