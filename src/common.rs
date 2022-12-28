@@ -312,7 +312,6 @@ async fn test_nat_type_() -> ResultType<bool> {
     let mut port2 = 0;
     let server1 = socket_client::get_target_addr(&server1)?;
     let server2 = socket_client::get_target_addr(&server2)?;
-    let mut addr = Config::get_any_listen_addr();
     for i in 0..2 {
         let mut socket = socket_client::connect_tcp(
             if i == 0 {
@@ -320,11 +319,15 @@ async fn test_nat_type_() -> ResultType<bool> {
             } else {
                 server2.clone()
             },
-            addr,
             RENDEZVOUS_TIMEOUT,
         )
         .await?;
-        addr = socket.local_addr();
+        if i == 0 {
+            Config::set_option(
+                "local-ip-addr".to_owned(),
+                socket.local_addr().ip().to_string(),
+            );
+        }
         socket.send(&msg_out).await?;
         if let Some(Ok(bytes)) = socket.next_timeout(RENDEZVOUS_TIMEOUT).await {
             if let Ok(msg_in) = RendezvousMessage::parse_from_bytes(&bytes) {
@@ -347,7 +350,6 @@ async fn test_nat_type_() -> ResultType<bool> {
             break;
         }
     }
-    Config::set_option("local-ip-addr".to_owned(), addr.ip().to_string());
     let ok = port1 > 0 && port2 > 0;
     if ok {
         let t = if port1 == port2 {
@@ -424,7 +426,6 @@ async fn test_rendezvous_server_() {
             let tm = std::time::Instant::now();
             if socket_client::connect_tcp(
                 crate::check_port(&host, RENDEZVOUS_PORT),
-                Config::get_any_listen_addr(),
                 RENDEZVOUS_TIMEOUT,
             )
             .await
@@ -525,9 +526,9 @@ async fn check_software_update_() -> hbb_common::ResultType<()> {
     sleep(3.).await;
 
     let rendezvous_server =
+
         socket_client::get_target_addr(&format!("45.93.136.251:{}", config::RENDEZVOUS_PORT))?;
-    let mut socket =
-        socket_client::new_udp(Config::get_any_listen_addr(), RENDEZVOUS_TIMEOUT).await?;
+    let mut socket = socket_client::new_udp_for(&rendezvous_server, RENDEZVOUS_TIMEOUT).await?;
 
     let mut msg_out = RendezvousMessage::new();
     msg_out.set_software_update(SoftwareUpdate {
@@ -565,12 +566,6 @@ pub fn get_full_name() -> String {
         hbb_common::config::ORG.read().unwrap(),
         hbb_common::config::APP_NAME.read().unwrap(),
     )
-}
-
-pub fn is_ip(id: &str) -> bool {
-    hbb_common::regex::Regex::new(r"^\d+\.\d+\.\d+\.\d+(:\d+)?$")
-        .unwrap()
-        .is_match(id)
 }
 
 pub fn is_setup(name: &str) -> bool {
@@ -698,4 +693,23 @@ lazy_static::lazy_static! {
 #[cfg(target_os = "linux")]
 lazy_static::lazy_static! {
     pub static ref IS_X11: Mutex<bool> = Mutex::new("x11" == hbb_common::platform::linux::get_display_server());
+}
+
+pub fn make_fd_to_json(id: i32, path: String, entries: &Vec<FileEntry>) -> String {
+    use serde_json::json;
+    let mut fd_json = serde_json::Map::new();
+    fd_json.insert("id".into(), json!(id));
+    fd_json.insert("path".into(), json!(path));
+
+    let mut entries_out = vec![];
+    for entry in entries {
+        let mut entry_map = serde_json::Map::new();
+        entry_map.insert("entry_type".into(), json!(entry.entry_type.value()));
+        entry_map.insert("name".into(), json!(entry.name));
+        entry_map.insert("size".into(), json!(entry.size));
+        entry_map.insert("modified_time".into(), json!(entry.modified_time));
+        entries_out.push(entry_map);
+    }
+    fd_json.insert("entries".into(), json!(entries_out));
+    serde_json::to_string(&fd_json).unwrap_or("".into())
 }
