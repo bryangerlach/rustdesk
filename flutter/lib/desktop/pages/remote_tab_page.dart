@@ -255,8 +255,11 @@ class _ConnectionTabPageState extends State<ConnectionTabPage> {
         },
         padding: padding,
       ),
-      MenuEntryDivider<String>(),
-      () {
+    ]);
+
+    if (!ffi.canvasModel.cursorEmbedded) {
+      menu.add(MenuEntryDivider<String>());
+      menu.add(() {
         final state = ShowRemoteCursorState.find(key);
         return MenuEntrySwitch2<String>(
           switchType: SwitchType.scheckbox,

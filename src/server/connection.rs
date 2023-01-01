@@ -400,7 +400,7 @@ impl Connection {
                 },
                 Some((instant, value)) = rx_video.recv() => {
                     if !conn.video_ack_required {
-                        video_service::notify_video_frame_feched(id, Some(instant.into()));
+                        video_service::notify_video_frame_fetched(id, Some(instant.into()));
                     }
                     if let Err(err) = conn.stream.send(&value as &Message).await {
                         conn.on_close(&err.to_string(), false).await;
@@ -499,7 +499,7 @@ impl Connection {
         } else if video_privacy_conn_id == 0 {
             let _ = privacy_mode::turn_off_privacy(0);
         }
-        video_service::notify_video_frame_feched(id, None);
+        video_service::notify_video_frame_fetched(id, None);
         scrap::codec::Encoder::update_video_encoder(id, scrap::codec::EncoderUpdate::Remove);
         video_service::VIDEO_QOS.lock().unwrap().reset();
         if conn.authorized {
@@ -523,6 +523,8 @@ impl Connection {
             rdev::set_dw_mouse_extra_info(enigo::ENIGO_INPUT_EXTRA_VALUE);
             rdev::set_dw_keyboard_extra_info(enigo::ENIGO_INPUT_EXTRA_VALUE);
         }
+        #[cfg(target_os = "macos")]
+        reset_input_ondisconn();
         loop {
             match receiver.recv_timeout(std::time::Duration::from_millis(500)) {
                 Ok(v) => match v {
@@ -1462,7 +1464,7 @@ impl Connection {
                         }
                     }
                     Some(misc::Union::VideoReceived(_)) => {
-                        video_service::notify_video_frame_feched(
+                        video_service::notify_video_frame_fetched(
                             self.inner.id,
                             Some(Instant::now().into()),
                         );

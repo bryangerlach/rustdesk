@@ -1,12 +1,14 @@
 use crate::client::*;
 use hbb_common::{
     config::PeerConfig,
+    config::READ_TIMEOUT,
+    futures::{SinkExt, StreamExt},
     log,
     message_proto::*,
     protobuf::Message as _,
+    rendezvous_proto::ConnType,
     tokio::{self, sync::mpsc},
     Stream,
-    rendezvous_proto::ConnType,
 };
 use std::sync::{Arc, RwLock};
 
@@ -44,7 +46,7 @@ impl Interface for Session {
     fn get_login_config_handler(&self) -> Arc<RwLock<LoginConfigHandler>> {
         return self.lc.clone();
     }
-    
+
     fn msgbox(&self, msgtype: &str, title: &str, text: &str, link: &str) {
         if msgtype == "input-password" {
             self.sender
@@ -83,6 +85,42 @@ impl Interface for Session {
 
     fn send(&self, data: Data) {
         self.sender.send(data).ok();
+    }
+}
+
+#[tokio::main(flavor = "current_thread")]
+pub async fn connect_test(id: &str, key: String, token: String) {
+    let (sender, mut receiver) = mpsc::unbounded_channel::<Data>();
+    let handler = Session::new(&id, sender);
+    match crate::client::Client::start(id, &key, &token, ConnType::PORT_FORWARD, handler).await {
+        Err(err) => {
+            log::error!("Failed to connect {}: {}", &id, err);
+        }
+        Ok((mut stream, direct)) => {
+            log::info!("direct: {}", direct);
+            // rpassword::prompt_password("Input anything to exit").ok();
+            loop {
+                tokio::select! {
+                    res = hbb_common::timeout(READ_TIMEOUT, stream.next()) => match res {
+                        Err(_) => {
+                            log::error!("Timeout");
+                            break;
+                        }
+                        Ok(Some(Ok(bytes))) => {
+                            let msg_in = Message::parse_from_bytes(&bytes).unwrap();
+                            match msg_in.union {
+                                Some(message::Union::Hash(hash)) => {
+                                    log::info!("Got hash");
+                                    break;
+                                }
+                                _ => {}
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
     }
 }
 
