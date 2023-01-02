@@ -275,8 +275,8 @@ class _ConnectionTabPageState extends State<ConnectionTabPage> {
           },
           padding: padding,
         );
-      }()
-    ]);
+      }());
+    }
 
     if (perms['keyboard'] != false) {
       if (perms['clipboard'] != false) {
