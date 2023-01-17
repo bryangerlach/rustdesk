@@ -771,7 +771,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
           }
 
           if (newValue == kRemoteImageQualityCustom) {
-            final btnClose = msgBoxButton(translate('Close'), () async {
+            final btnClose = dialogButton('Close', onPressed: () async {
               await setCustomValues();
               widget.ffi.dialogManager.dismissAll();
             });
@@ -1288,16 +1288,8 @@ void showSetOSPassword(
         ),
       ]),
       actions: [
-        TextButton(
-          style: flatButtonStyle,
-          onPressed: close,
-          child: Text(translate('Cancel')),
-        ),
-        TextButton(
-          style: flatButtonStyle,
-          onPressed: submit,
-          child: Text(translate('OK')),
-        ),
+        dialogButton('Cancel', onPressed: close, isOutline: true),
+        dialogButton('OK', onPressed: submit),
       ],
       onSubmit: submit,
       onCancel: close,
