@@ -236,7 +236,7 @@ pub fn set_peer_option(id: String, name: String, value: String) {
 
 #[inline]
 pub fn using_public_server() -> bool {
-    option_env!("RENDEZVOUS_SERVER").is_none()
+    option_env!("RENDEZVOUS_SERVER").unwrap_or("").is_empty()
         && crate::get_custom_rendezvous_server(get_option_("custom-rendezvous-server")).is_empty()
 }
 
@@ -577,6 +577,7 @@ pub fn is_installed_daemon(_prompt: bool) -> bool {
 }
 
 #[inline]
+#[cfg(feature = "flutter")]
 pub fn is_can_input_monitoring(_prompt: bool) -> bool {
     #[cfg(target_os = "macos")]
     return crate::platform::macos::is_can_input_monitoring(_prompt);
@@ -614,25 +615,11 @@ pub fn is_login_wayland() -> bool {
 }
 
 #[inline]
-pub fn fix_login_wayland() {
-    #[cfg(target_os = "linux")]
-    crate::platform::linux::fix_login_wayland();
-}
-
-#[inline]
 pub fn current_is_wayland() -> bool {
     #[cfg(target_os = "linux")]
     return crate::platform::linux::current_is_wayland();
     #[cfg(not(target_os = "linux"))]
     return false;
-}
-
-#[inline]
-pub fn modify_default_login() -> String {
-    #[cfg(target_os = "linux")]
-    return crate::platform::linux::modify_default_login();
-    #[cfg(not(target_os = "linux"))]
-    return "".to_owned();
 }
 
 #[inline]

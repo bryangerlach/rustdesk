@@ -13,9 +13,9 @@ use hbb_common::{
     log,
 };
 
-use crate::common::get_app_name;
-use crate::ipc;
-use crate::ui_interface::*;
+#[cfg(not(any(feature = "flutter", feature = "cli")))]
+use crate::ui_session_interface::Session;
+use crate::{common::get_app_name, ipc, ui_interface::*};
 
 mod cm;
 #[cfg(feature = "inline")]
@@ -33,6 +33,11 @@ type Status = (i32, bool, i64, String);
 lazy_static::lazy_static! {
     // stupid workaround for https://sciter.com/forums/topic/crash-on-latest-tis-mac-sdk-sometimes/
     static ref STUPID_VALUES: Mutex<Vec<Arc<Vec<Value>>>> = Default::default();
+}
+
+#[cfg(not(any(feature = "flutter", feature = "cli")))]
+lazy_static::lazy_static! {
+    pub static ref CUR_SESSION: Arc<Mutex<Option<Session<remote::SciterHandler>>>> = Default::default();
 }
 
 struct UIHostHandler;
@@ -119,9 +124,10 @@ pub fn start(args: &mut [String]) {
         frame.register_behavior("native-remote", move || {
             let handler =
                 remote::SciterSession::new(cmd.clone(), id.clone(), pass.clone(), args.clone());
-            #[cfg(not(feature = "flutter"))]
-            crate::keyboard::set_cur_session(handler.inner());
-
+            #[cfg(not(any(feature = "flutter", feature = "cli")))]
+            {
+                *CUR_SESSION.lock().unwrap() = Some(handler.inner());
+            }
             Box::new(handler)
         });
         page = "remote.html";
@@ -428,16 +434,8 @@ impl UI {
         is_login_wayland()
     }
 
-    fn fix_login_wayland(&mut self) {
-        fix_login_wayland()
-    }
-
     fn current_is_wayland(&mut self) -> bool {
         current_is_wayland()
-    }
-
-    fn modify_default_login(&mut self) -> String {
-        modify_default_login()
     }
 
     fn get_software_update_url(&self) -> String {
@@ -584,9 +582,7 @@ impl sciter::EventHandler for UI {
         fn is_installed_daemon(bool);
         fn get_error();
         fn is_login_wayland();
-        fn fix_login_wayland();
         fn current_is_wayland();
-        fn modify_default_login();
         fn get_options();
         fn get_option(String);
         fn get_local_option(String);

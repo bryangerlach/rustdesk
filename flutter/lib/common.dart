@@ -205,6 +205,9 @@ class MyTheme {
     splashColor: Colors.transparent,
     highlightColor: Colors.transparent,
     splashFactory: isDesktop ? NoSplash.splashFactory : null,
+    outlinedButtonTheme: OutlinedButtonThemeData(
+        style:
+            OutlinedButton.styleFrom(side: BorderSide(color: Colors.white38))),
     textButtonTheme: isDesktop
         ? TextButtonThemeData(
             style: ButtonStyle(splashFactory: NoSplash.splashFactory),
@@ -608,12 +611,12 @@ class CustomAlertDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    FocusNode focusNode = FocusNode();
-    // request focus if there is no focused FocusNode in the dialog
-    Future.delayed(Duration.zero, () {
-      if (!focusNode.hasFocus) focusNode.requestFocus();
-    });
+    // request focus
     FocusScopeNode scopeNode = FocusScopeNode();
+    Future.delayed(Duration.zero, () {
+      if (!scopeNode.hasFocus) scopeNode.requestFocus();
+    });
+    const double padding = 16;
     return FocusScope(
       node: scopeNode,
       autofocus: true,
@@ -638,17 +641,18 @@ class CustomAlertDialog extends StatelessWidget {
       child: AlertDialog(
         scrollable: true,
         title: title,
-        contentPadding: EdgeInsets.symmetric(
-            horizontal: contentPadding ?? 25, vertical: 10),
+        contentPadding: EdgeInsets.fromLTRB(
+            contentPadding ?? padding, 25, contentPadding ?? padding, 10),
         content: ConstrainedBox(
-            constraints: contentBoxConstraints,
-            child: Theme(
-                data: ThemeData(
+          constraints: contentBoxConstraints,
+          child: Theme(
+              data: Theme.of(context).copyWith(
                   inputDecorationTheme: InputDecorationTheme(
-                      isDense: true, contentPadding: EdgeInsets.all(15)),
-                ),
-                child: content)),
+                      isDense: true, contentPadding: EdgeInsets.all(15))),
+              child: content),
+        ),
         actions: actions,
+        actionsPadding: EdgeInsets.fromLTRB(0, 0, padding, padding),
       ),
     );
   }
@@ -702,9 +706,8 @@ void msgBox(String id, String type, String title, String text, String link,
   }
   dialogManager.show(
     (setState, close) => CustomAlertDialog(
-      title: _msgBoxTitle(title),
-      content:
-          SelectableText(translate(text), style: const TextStyle(fontSize: 15)),
+      title: null,
+      content: msgboxContent(type, title, text),
       actions: buttons,
       onSubmit: hasOk ? submit : null,
       onCancel: hasCancel == true ? cancel : null,
@@ -713,30 +716,74 @@ void msgBox(String id, String type, String title, String text, String link,
   );
 }
 
-Widget msgBoxButton(String text, void Function() onPressed) {
-  return ButtonTheme(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      //limits the touch area to the button area
-      minWidth: 0,
-      //wraps child's width
-      height: 0,
-      child: TextButton(
-          style: flatButtonStyle,
-          onPressed: onPressed,
-          child:
-              Text(translate(text), style: TextStyle(color: MyTheme.accent))));
+Color? _msgboxColor(String type) {
+  if (type == "input-password" || type == "custom-os-password") {
+    return Color(0xFFAD448E);
+  }
+  if (type.contains("success")) {
+    return Color(0xFF32bea6);
+  }
+  if (type.contains("error") || type == "re-input-password") {
+    return Color(0xFFE04F5F);
+  }
+  return Color(0xFF2C8CFF);
 }
 
-Widget _msgBoxTitle(String title) =>
-    Text(translate(title), style: TextStyle(fontSize: 21));
+Widget msgboxIcon(String type) {
+  IconData? iconData;
+  if (type.contains("error") || type == "re-input-password") {
+    iconData = Icons.cancel;
+  }
+  if (type.contains("success")) {
+    iconData = Icons.check_circle;
+  }
+  if (type == "wait-uac" || type == "wait-remote-accept-nook") {
+    iconData = Icons.hourglass_top;
+  }
+  if (type == 'on-uac' || type == 'on-foreground-elevated') {
+    iconData = Icons.admin_panel_settings;
+  }
+  if (type == "info") {
+    iconData = Icons.info;
+  }
+  if (iconData != null) {
+    return Icon(iconData, size: 50, color: _msgboxColor(type))
+        .marginOnly(right: 16);
+  }
+
+  return Offstage();
+}
+
+// title should be null
+Widget msgboxContent(String type, String title, String text) {
+  return Row(
+    children: [
+      msgboxIcon(type),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              translate(title),
+              style: TextStyle(fontSize: 21),
+            ).marginOnly(bottom: 10),
+            Text(translate(text), style: const TextStyle(fontSize: 15)),
+          ],
+        ),
+      ),
+    ],
+  );
+}
 
 void msgBoxCommon(OverlayDialogManager dialogManager, String title,
     Widget content, List<Widget> buttons,
     {bool hasCancel = true}) {
   dialogManager.dismissAll();
   dialogManager.show((setState, close) => CustomAlertDialog(
-        title: _msgBoxTitle(title),
+        title: Text(
+          translate(title),
+          style: TextStyle(fontSize: 21),
+        ),
         content: content,
         actions: buttons,
         onCancel: hasCancel ? close : null,
@@ -1261,23 +1308,28 @@ StreamSubscription? listenUniLinks() {
 
 /// Returns true if we successfully handle the startup arguments.
 bool checkArguments() {
+  // bootArgs:[--connect, 362587269, --switch_uuid, e3d531cc-5dce-41e0-bd06-5d4a2b1eec05]
   // check connect args
-  final connectIndex = bootArgs.indexOf("--connect");
+  final connectIndex = kBootArgs.indexOf("--connect");
   if (connectIndex == -1) {
     return false;
   }
-  String? arg =
-      bootArgs.length < connectIndex + 1 ? null : bootArgs[connectIndex + 1];
-  if (arg != null) {
-    if (arg.startsWith(kUniLinksPrefix)) {
-      return parseRustdeskUri(arg);
+  String? id =
+      kBootArgs.length < connectIndex + 1 ? null : kBootArgs[connectIndex + 1];
+  final switchUuidIndex = kBootArgs.indexOf("--switch_uuid");
+  String? switchUuid = kBootArgs.length < switchUuidIndex + 1
+      ? null
+      : kBootArgs[switchUuidIndex + 1];
+  if (id != null) {
+    if (id.startsWith(kUniLinksPrefix)) {
+      return parseRustdeskUri(id);
     } else {
       // remove "--connect xxx" in the `bootArgs` array
-      bootArgs.removeAt(connectIndex);
-      bootArgs.removeAt(connectIndex);
+      kBootArgs.removeAt(connectIndex);
+      kBootArgs.removeAt(connectIndex);
       // fallback to peer id
       Future.delayed(Duration.zero, () {
-        rustDeskWinManager.newRemoteDesktop(arg);
+        rustDeskWinManager.newRemoteDesktop(id, switch_uuid: switchUuid);
       });
       return true;
     }
@@ -1307,10 +1359,12 @@ bool callUniLinksUriHandler(Uri uri) {
   // new connection
   if (uri.authority == "connection" && uri.path.startsWith("/new/")) {
     final peerId = uri.path.substring("/new/".length);
+    var param = uri.queryParameters;
+    String? switch_uuid = param["switch_uuid"];
     Future.delayed(Duration.zero, () {
-      rustDeskWinManager.newRemoteDesktop(peerId);
+      rustDeskWinManager.newRemoteDesktop(peerId, switch_uuid: switch_uuid);
     });
-    return true;
+    return false;
   }
   return false;
 }
@@ -1583,7 +1637,8 @@ class ServerConfig {
 Widget dialogButton(String text,
     {required VoidCallback? onPressed,
     bool isOutline = false,
-    TextStyle? style}) {
+    TextStyle? style,
+    ButtonStyle? buttonStyle}) {
   if (isDesktop) {
     if (isOutline) {
       return OutlinedButton(
@@ -1592,7 +1647,7 @@ Widget dialogButton(String text,
       );
     } else {
       return ElevatedButton(
-        style: ElevatedButton.styleFrom(elevation: 0),
+        style: ElevatedButton.styleFrom(elevation: 0).merge(buttonStyle),
         onPressed: onPressed,
         child: Text(translate(text), style: style),
       );
@@ -1605,4 +1660,28 @@ Widget dialogButton(String text,
           style: style,
         ));
   }
+}
+
+int version_cmp(String v1, String v2) {
+  return bind.versionToNumber(v: v1) - bind.versionToNumber(v: v2);
+}
+
+String getWindowName({WindowType? overrideType}) {
+  switch (overrideType ?? kWindowType) {
+    case WindowType.Main:
+      return "RustDesk";
+    case WindowType.FileTransfer:
+      return "File Transfer - RustDesk";
+    case WindowType.PortForward:
+      return "Port Forward - RustDesk";
+    case WindowType.RemoteDesktop:
+      return "Remote Desktop - RustDesk";
+    default:
+      break;
+  }
+  return "RustDesk";
+}
+
+String getWindowNameWithId(String id, {WindowType? overrideType}) {
+  return "${DesktopTab.labelGetterAlias(id).value} - ${getWindowName(overrideType: overrideType)}";
 }

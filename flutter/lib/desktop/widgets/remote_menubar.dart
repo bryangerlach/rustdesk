@@ -313,38 +313,85 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
 
   Widget _buildMonitor(BuildContext context) {
     final pi = widget.ffi.ffiModel.pi;
-    final numMonitors = pi.displays.length;
-    return IconButton(
-        tooltip: translate('Select Monitor'),
-        onPressed: () {
-          RxInt display = CurrentDisplayState.find(widget.id);
-          display.value = display.value + 1;
-          if (display.value >= numMonitors) {
-            display.value = 0;
-          }
-          bind.sessionSwitchDisplay(id: widget.id, value: display.value);
-          pi.currentDisplay = display.value;
-        },
-        icon: Stack(
-          alignment: Alignment.center,
-          children: [
-            const Icon(
-              Icons.personal_video,
-              color: _MenubarTheme.commonColor,
+    return mod_menu.PopupMenuButton(
+      tooltip: translate('Select Monitor'),
+      padding: EdgeInsets.zero,
+      position: mod_menu.PopupMenuPosition.under,
+      icon: Stack(
+        alignment: Alignment.center,
+        children: [
+          const Icon(
+            Icons.personal_video,
+            color: _MenubarTheme.commonColor,
+          ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 3.9),
+            child: Obx(() {
+              RxInt display = CurrentDisplayState.find(widget.id);
+              return Text(
+                '${display.value + 1}/${pi.displays.length}',
+                style: const TextStyle(
+                    color: _MenubarTheme.commonColor, fontSize: 8),
+              );
+            }),
+          )
+        ],
+      ),
+      itemBuilder: (BuildContext context) {
+        final List<Widget> rowChildren = [];
+        for (int i = 0; i < pi.displays.length; i++) {
+          rowChildren.add(
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                const Icon(
+                  Icons.personal_video,
+                  color: _MenubarTheme.commonColor,
+                ),
+                TextButton(
+                  child: Container(
+                      alignment: AlignmentDirectional.center,
+                      constraints:
+                          const BoxConstraints(minHeight: _MenubarTheme.height),
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 2.5),
+                        child: Text(
+                          (i + 1).toString(),
+                          style:
+                              const TextStyle(color: _MenubarTheme.commonColor),
+                        ),
+                      )),
+                  onPressed: () {
+                    if (Navigator.canPop(context)) {
+                      Navigator.pop(context);
+                    }
+                    RxInt display = CurrentDisplayState.find(widget.id);
+                    if (display.value != i) {
+                      bind.sessionSwitchDisplay(id: widget.id, value: i);
+                    }
+                  },
+                )
+              ],
             ),
-            Padding(
-              padding: const EdgeInsets.only(bottom: 3.9),
-              child: Obx(() {
-                RxInt display = CurrentDisplayState.find(widget.id);
-                return Text(
-                  '${display.value + 1}/${pi.displays.length}',
-                  style: const TextStyle(
-                      color: _MenubarTheme.commonColor, fontSize: 8),
-                );
-              }),
-            )
-          ],
-        ));
+          );
+        }
+        return <mod_menu.PopupMenuEntry<String>>[
+          mod_menu.PopupMenuItem<String>(
+            height: _MenubarTheme.height,
+            padding: EdgeInsets.zero,
+            child: Listener(
+              onPointerHover: (PointerHoverEvent e) =>
+                  widget.ffi.inputModel.lastMousePos = e.position,
+              child: MouseRegion(
+                child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: rowChildren),
+              ),
+            ),
+          )
+        ];
+      },
+    );
   }
 
   Widget _buildControl(BuildContext context) {
@@ -471,6 +518,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
   List<MenuEntryBase<String>> _getControlMenu(BuildContext context) {
     final pi = widget.ffi.ffiModel.pi;
     final perms = widget.ffi.ffiModel.permissions;
+    final peer_version = widget.ffi.ffiModel.pi.version;
     const EdgeInsets padding = EdgeInsets.only(left: 14.0, right: 5.0);
     final List<MenuEntryBase<String>> displayMenu = [];
     displayMenu.addAll([
@@ -613,6 +661,20 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
           dismissOnClicked: true,
         ));
       }
+      if (pi.platform != kPeerPlatformAndroid &&
+          pi.platform != kPeerPlatformMacOS && // unsupport yet
+          version_cmp(peer_version, '1.2.0') >= 0) {
+        displayMenu.add(MenuEntryButton<String>(
+          childBuilder: (TextStyle? style) => Text(
+            translate('Switch Sides'),
+            style: style,
+          ),
+          proc: () =>
+              showConfirmSwitchSidesDialog(widget.id, widget.ffi.dialogManager),
+          padding: padding,
+          dismissOnClicked: true,
+        ));
+      }
     }
 
     if (pi.version.isNotEmpty) {
@@ -683,6 +745,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
   List<MenuEntryBase<String>> _getDisplayMenu(
       dynamic futureData, int remoteCount) {
     const EdgeInsets padding = EdgeInsets.only(left: 18.0, right: 8.0);
+    final peer_version = widget.ffi.ffiModel.pi.version;
     final displayMenu = [
       MenuEntryRadios<String>(
         text: translate('Ratio'),
@@ -842,9 +905,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
             final fpsSlider = Offstage(
               offstage:
                   (await bind.mainIsUsingPublicServer() && direct != true) ||
-                      (await bind.versionToNumber(
-                              v: widget.ffi.ffiModel.pi.version) <
-                          await bind.versionToNumber(v: '1.2.0')),
+                      version_cmp(peer_version, '1.2.0') < 0,
               child: Row(
                 children: [
                   Obx((() => Slider(
@@ -1353,16 +1414,29 @@ void showAuditDialog(String id, dialogManager) async {
             focusNode: focusNode,
           )),
       actions: [
-        TextButton(
-          style: flatButtonStyle,
-          onPressed: close,
-          child: Text(translate('Cancel')),
-        ),
-        TextButton(
-          style: flatButtonStyle,
-          onPressed: submit,
-          child: Text(translate('OK')),
-        ),
+        dialogButton('Cancel', onPressed: close, isOutline: true),
+        dialogButton('OK', onPressed: submit)
+      ],
+      onSubmit: submit,
+      onCancel: close,
+    );
+  });
+}
+
+void showConfirmSwitchSidesDialog(
+    String id, OverlayDialogManager dialogManager) async {
+  dialogManager.show((setState, close) {
+    submit() async {
+      await bind.sessionSwitchSides(id: id);
+      closeConnection(id: id);
+    }
+
+    return CustomAlertDialog(
+      content: msgboxContent('info', 'Switch Sides',
+          'Please confirm if you want to share your desktop?'),
+      actions: [
+        dialogButton('Cancel', onPressed: close, isOutline: true),
+        dialogButton('OK', onPressed: submit),
       ],
       onSubmit: submit,
       onCancel: close,

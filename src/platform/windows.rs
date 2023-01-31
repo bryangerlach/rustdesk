@@ -49,6 +49,7 @@ use winreg::RegKey;
 
 pub fn get_cursor_pos() -> Option<(i32, i32)> {
     unsafe {
+        #[allow(invalid_value)]
         let mut out = mem::MaybeUninit::uninit().assume_init();
         if GetCursorPos(&mut out) == FALSE {
             return None;
@@ -61,6 +62,7 @@ pub fn reset_input_cache() {}
 
 pub fn get_cursor() -> ResultType<Option<u64>> {
     unsafe {
+        #[allow(invalid_value)]
         let mut ci: CURSORINFO = mem::MaybeUninit::uninit().assume_init();
         ci.cbSize = std::mem::size_of::<CURSORINFO>() as _;
         if crate::portable_service::client::get_cursor_info(&mut ci) == FALSE {
@@ -79,6 +81,7 @@ struct IconInfo(ICONINFO);
 impl IconInfo {
     fn new(icon: HICON) -> ResultType<Self> {
         unsafe {
+            #[allow(invalid_value)]
             let mut ii = mem::MaybeUninit::uninit().assume_init();
             if GetIconInfo(icon, &mut ii) == FALSE {
                 Err(io::Error::last_os_error().into())
@@ -838,6 +841,11 @@ pub fn check_update_broker_process() -> ResultType<()> {
     }
     let cur_dir = exe_file.parent().unwrap();
     let cur_exe = cur_dir.join(process_exe);
+
+    if !std::path::Path::new(&cur_exe).exists() {
+        std::fs::copy(origin_process_exe, cur_exe)?;
+        return Ok(());
+    }
 
     let ori_modified = fs::metadata(origin_process_exe)?.modified()?;
     if let Ok(metadata) = fs::metadata(&cur_exe) {
@@ -1736,4 +1744,14 @@ pub fn create_process_with_logon(user: &str, pwd: &str, exe: &str, arg: &str) ->
         }
     }
     return Ok(());
+}
+
+pub fn set_path_permission(dir: &PathBuf, permission: &str) -> ResultType<()> {
+    std::process::Command::new("icacls")
+        .arg(dir.as_os_str())
+        .arg("/grant")
+        .arg(format!("Everyone:(OI)(CI){}", permission))
+        .arg("/T")
+        .spawn()?;
+    Ok(())
 }

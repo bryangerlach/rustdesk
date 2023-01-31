@@ -1104,12 +1104,16 @@ impl<T: InvokeUiSession> Remote<T> {
                     Some(misc::Union::PortableServiceRunning(b)) => {
                         if b {
                             self.handler.msgbox(
-                                "custom-nocancel",
+                                "custom-nocancel-success",
                                 "Successful",
                                 "Elevate successfully",
                                 "",
                             );
                         }
+                    }
+                    Some(misc::Union::SwitchBack(_)) => {
+                        #[cfg(feature = "flutter")]
+                        self.handler.switch_back(&self.handler.id);
                     }
                     _ => {}
                 },
