@@ -869,18 +869,24 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
                       value: qualitySliderValue.value,
                       min: qualityMinValue,
                       max: qualityMaxValue,
-                      divisions: 90,
+                      divisions: 18,
                       onChanged: (double value) {
                         qualitySliderValue.value = value;
                         debouncerQuality.value = value;
                       },
                     ),
                     SizedBox(
-                        width: 90,
-                        child: Obx(() => Text(
-                              '${qualitySliderValue.value.round()}% Bitrate',
-                              style: const TextStyle(fontSize: 15),
-                            )))
+                        width: 40,
+                        child: Text(
+                          '${qualitySliderValue.value.round()}%',
+                          style: const TextStyle(fontSize: 15),
+                        )),
+                    SizedBox(
+                        width: 50,
+                        child: Text(
+                          translate('Bitrate'),
+                          style: const TextStyle(fontSize: 15),
+                        ))
                   ],
                 ));
             // fps
@@ -921,20 +927,17 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
                         },
                       ))),
                   SizedBox(
-                      width: 90,
-                      child: Obx(() {
-                        final fps = fpsSliderValue.value.round();
-                        String text;
-                        if (fps < 100) {
-                          text = '$fps     FPS';
-                        } else {
-                          text = '$fps  FPS';
-                        }
-                        return Text(
-                          text,
-                          style: const TextStyle(fontSize: 15),
-                        );
-                      }))
+                      width: 40,
+                      child: Obx(() => Text(
+                            '${fpsSliderValue.value.round()}',
+                            style: const TextStyle(fontSize: 15),
+                          ))),
+                  SizedBox(
+                      width: 50,
+                      child: Text(
+                        translate('FPS'),
+                        style: const TextStyle(fontSize: 15),
+                      ))
                 ],
               ),
             );
@@ -1113,6 +1116,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
         ));
       }
     }
+    displayMenu.add(MenuEntryDivider());
 
     /// Show remote cursor
     if (!widget.ffi.canvasModel.cursorEmbedded) {
