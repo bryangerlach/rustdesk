@@ -122,20 +122,20 @@ void runMainApp(bool startService) async {
   }
   gFFI.userModel.refreshCurrentUser();
   runApp(App());
-  // restore the location of the main window before window hide or show
-  await restoreWindowPosition(WindowType.Main);
-  // check the startup argument, if we successfully handle the argument, we keep the main window hidden.
-  if (checkArguments()) {
-    windowManager.hide();
-  } else {
-    windowManager.show();
-    windowManager.focus();
-    // move registration of active main window here to prevent async visible check.
-    rustDeskWinManager.registerActiveWindow(kWindowMainId);
-  }
-  // set window option
+  // Set window option.
   WindowOptions windowOptions = getHiddenTitleBarWindowOptions();
   windowManager.waitUntilReadyToShow(windowOptions, () async {
+    // Restore the location of the main window before window hide or show.
+    await restoreWindowPosition(WindowType.Main);
+    // Check the startup argument, if we successfully handle the argument, we keep the main window hidden.
+    if (checkArguments()) {
+      windowManager.hide();
+    } else {
+      windowManager.show();
+      windowManager.focus();
+      // Move registration of active main window here to prevent from async visible check.
+      rustDeskWinManager.registerActiveWindow(kWindowMainId);
+    }
     windowManager.setOpacity(1);
   });
   windowManager.setTitle(getWindowName());
@@ -223,6 +223,7 @@ void showCmWindow() {
   WindowOptions windowOptions =
       getHiddenTitleBarWindowOptions(size: kConnectionManagerWindowSize);
   windowManager.waitUntilReadyToShow(windowOptions, () async {
+    bind.mainHideDocker();
     await windowManager.show();
     await Future.wait([windowManager.focus(), windowManager.setOpacity(1)]);
     // ensure initial window size to be changed
@@ -236,6 +237,7 @@ void hideCmWindow() {
       getHiddenTitleBarWindowOptions(size: kConnectionManagerWindowSize);
   windowManager.setOpacity(0);
   windowManager.waitUntilReadyToShow(windowOptions, () async {
+    bind.mainHideDocker();
     await windowManager.hide();
   });
 }

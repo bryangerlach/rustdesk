@@ -198,7 +198,7 @@ pub fn core_main() -> Option<Vec<String>> {
             {
                 std::thread::spawn(move || crate::start_server(true));
                 crate::platform::macos::hide_dock();
-                crate::tray::make_tray();
+                crate::ui::macos::make_tray();
                 return None;
             }
             #[cfg(target_os = "linux")]
@@ -247,8 +247,6 @@ pub fn core_main() -> Option<Vec<String>> {
             #[cfg(feature = "flutter")]
             crate::flutter::connection_manager::start_listen_ipc_thread();
             crate::ui_interface::start_option_status_sync();
-            #[cfg(target_os = "macos")]
-            crate::platform::macos::hide_dock();
         }
     }
     //_async_logger_holder.map(|x| x.flush());
@@ -294,8 +292,7 @@ fn import_config(path: &str) {
 fn core_main_invoke_new_connection(mut args: std::env::Args) -> Option<Vec<String>> {
     args.position(|element| {
         return element == "--connect";
-    })
-    .unwrap();
+    })?;
     let peer_id = args.next().unwrap_or("".to_string());
     if peer_id.is_empty() {
         eprintln!("please provide a valid peer id");
