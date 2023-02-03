@@ -223,6 +223,18 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
     }
   }
 
+  Widget _buildPointerTrackWidget(Widget child) {
+    return Listener(
+      onPointerHover: (PointerHoverEvent e) =>
+          widget.ffi.inputModel.lastMousePos = e.position,
+      child: MouseRegion(
+        child: child,
+      ),
+    );
+  }
+
+  _menuDismissCallback() => widget.ffi.inputModel.refreshMousePos();
+
   Widget _buildMenubar(BuildContext context) {
     final List<Widget> menubarItems = [];
     if (!isWebDesktop) {
@@ -366,6 +378,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
                   onPressed: () {
                     if (Navigator.canPop(context)) {
                       Navigator.pop(context);
+                      _menuDismissCallback();
                     }
                     RxInt display = CurrentDisplayState.find(widget.id);
                     if (display.value != i) {
@@ -381,13 +394,10 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
           mod_menu.PopupMenuItem<String>(
             height: _MenubarTheme.height,
             padding: EdgeInsets.zero,
-            child: Listener(
-              onPointerHover: (PointerHoverEvent e) =>
-                  widget.ffi.inputModel.lastMousePos = e.position,
-              child: MouseRegion(
-                child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: rowChildren),
+            child: _buildPointerTrackWidget(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: rowChildren,
               ),
             ),
           )
@@ -437,6 +447,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
             ),
             tooltip: translate('Display Settings'),
             position: mod_menu.PopupMenuPosition.under,
+            menuWrapper: _buildPointerTrackWidget,
             itemBuilder: (BuildContext context) =>
                 _getDisplayMenu(snapshot.data!, remoteCount)
                     .map((entry) => entry.build(
@@ -545,6 +556,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
                           onPressed: () {
                             if (Navigator.canPop(context)) {
                               Navigator.pop(context);
+                              _menuDismissCallback();
                             }
                             showSetOSPassword(
                                 widget.id, false, widget.ffi.dialogManager);
@@ -557,6 +569,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
         },
         padding: padding,
         dismissOnClicked: true,
+        dismissCallback: _menuDismissCallback,
       ),
       MenuEntryButton<String>(
         childBuilder: (TextStyle? style) => Text(
@@ -568,6 +581,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
         },
         padding: padding,
         dismissOnClicked: true,
+        dismissCallback: _menuDismissCallback,
       ),
       MenuEntryButton<String>(
         childBuilder: (TextStyle? style) => Text(
@@ -579,6 +593,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
           connect(context, widget.id, isTcpTunneling: true);
         },
         dismissOnClicked: true,
+        dismissCallback: _menuDismissCallback,
       ),
     ]);
     // {handler.get_audit_server() && <li #note>{translate('Note')}</li>}
@@ -596,6 +611,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
           },
           padding: padding,
           dismissOnClicked: true,
+          dismissCallback: _menuDismissCallback,
         ),
       );
     }
@@ -612,6 +628,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
           },
           padding: padding,
           dismissOnClicked: true,
+          dismissCallback: _menuDismissCallback,
         ));
       }
     }
@@ -629,6 +646,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
         },
         padding: padding,
         dismissOnClicked: true,
+        dismissCallback: _menuDismissCallback,
       ));
     }
 
@@ -643,6 +661,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
         },
         padding: padding,
         dismissOnClicked: true,
+        dismissCallback: _menuDismissCallback,
       ));
 
       if (pi.platform == kPeerPlatformWindows) {
@@ -661,6 +680,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
           },
           padding: padding,
           dismissOnClicked: true,
+          dismissCallback: _menuDismissCallback,
         ));
       }
       if (pi.platform != kPeerPlatformAndroid &&
@@ -675,6 +695,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
               showConfirmSwitchSidesDialog(widget.id, widget.ffi.dialogManager),
           padding: padding,
           dismissOnClicked: true,
+          dismissCallback: _menuDismissCallback,
         ));
       }
     }
@@ -690,6 +711,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
         },
         padding: padding,
         dismissOnClicked: true,
+        dismissCallback: _menuDismissCallback,
       ));
     }
 
@@ -711,6 +733,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
       //       },
       //       padding: padding,
       //       dismissOnClicked: true,
+      //       dismissCallback: _menuDismissCallback,
       //     ));
       //   }
     }
@@ -756,11 +779,13 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
             text: translate('Scale original'),
             value: kRemoteViewStyleOriginal,
             dismissOnClicked: true,
+            dismissCallback: _menuDismissCallback,
           ),
           MenuEntryRadioOption(
             text: translate('Scale adaptive'),
             value: kRemoteViewStyleAdaptive,
             dismissOnClicked: true,
+            dismissCallback: _menuDismissCallback,
           ),
         ],
         curOptionGetter: () async {
@@ -776,6 +801,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
         },
         padding: padding,
         dismissOnClicked: true,
+        dismissCallback: _menuDismissCallback,
       ),
       MenuEntryDivider<String>(),
       MenuEntryRadios<String>(
@@ -785,21 +811,26 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
             text: translate('Good image quality'),
             value: kRemoteImageQualityBest,
             dismissOnClicked: true,
+            dismissCallback: _menuDismissCallback,
           ),
           MenuEntryRadioOption(
             text: translate('Balanced'),
             value: kRemoteImageQualityBalanced,
             dismissOnClicked: true,
+            dismissCallback: _menuDismissCallback,
           ),
           MenuEntryRadioOption(
             text: translate('Optimize reaction time'),
             value: kRemoteImageQualityLow,
             dismissOnClicked: true,
+            dismissCallback: _menuDismissCallback,
           ),
           MenuEntryRadioOption(
-              text: translate('Custom'),
-              value: kRemoteImageQualityCustom,
-              dismissOnClicked: true),
+            text: translate('Custom'),
+            value: kRemoteImageQualityCustom,
+            dismissOnClicked: true,
+            dismissCallback: _menuDismissCallback,
+          ),
         ],
         curOptionGetter: () async =>
             // null means peer id is not found, which there's no need to care about
@@ -964,12 +995,14 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
                 text: translate('ScrollAuto'),
                 value: kRemoteScrollStyleAuto,
                 dismissOnClicked: true,
+                dismissCallback: _menuDismissCallback,
                 enabled: widget.ffi.canvasModel.imageOverflow,
               ),
               MenuEntryRadioOption(
                 text: translate('Scrollbar'),
                 value: kRemoteScrollStyleBar,
                 dismissOnClicked: true,
+                dismissCallback: _menuDismissCallback,
                 enabled: widget.ffi.canvasModel.imageOverflow,
               ),
             ],
@@ -982,6 +1015,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
             },
             padding: padding,
             dismissOnClicked: true,
+            dismissCallback: _menuDismissCallback,
           ));
       displayMenu.insert(3, MenuEntryDivider<String>());
 
@@ -1052,6 +1086,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
             },
             padding: padding,
             dismissOnClicked: true,
+            dismissCallback: _menuDismissCallback,
           ),
         );
       }
@@ -1078,11 +1113,13 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
                 text: translate('Auto'),
                 value: 'auto',
                 dismissOnClicked: true,
+                dismissCallback: _menuDismissCallback,
               ),
               MenuEntryRadioOption(
                 text: 'VP9',
                 value: 'vp9',
                 dismissOnClicked: true,
+                dismissCallback: _menuDismissCallback,
               ),
             ];
             if (codecs[0]) {
@@ -1090,6 +1127,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
                 text: 'H264',
                 value: 'h264',
                 dismissOnClicked: true,
+                dismissCallback: _menuDismissCallback,
               ));
             }
             if (codecs[1]) {
@@ -1097,6 +1135,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
                 text: 'H265',
                 value: 'h265',
                 dismissOnClicked: true,
+                dismissCallback: _menuDismissCallback,
               ));
             }
             return list;
@@ -1113,6 +1152,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
           },
           padding: padding,
           dismissOnClicked: true,
+          dismissCallback: _menuDismissCallback,
         ));
       }
     }
@@ -1122,6 +1162,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
     if (!widget.ffi.canvasModel.cursorEmbedded) {
       displayMenu.add(() {
         final state = ShowRemoteCursorState.find(widget.id);
+        final optKey = 'show-remote-cursor';
         return MenuEntrySwitch2<String>(
           switchType: SwitchType.scheckbox,
           text: translate('Show remote cursor'),
@@ -1129,12 +1170,13 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
             return state;
           },
           setter: (bool v) async {
-            state.value = v;
-            await bind.sessionToggleOption(
-                id: widget.id, value: 'show-remote-cursor');
+            await bind.sessionToggleOption(id: widget.id, value: optKey);
+            state.value =
+                bind.sessionGetToggleOptionSync(id: widget.id, arg: optKey);
           },
           padding: padding,
           dismissOnClicked: true,
+          dismissCallback: _menuDismissCallback,
         );
       }());
     }
@@ -1151,11 +1193,13 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
             return state;
           },
           setter: (bool v) async {
-            state.value = v;
             await bind.sessionToggleOption(id: widget.id, value: opt);
+            state.value =
+                bind.sessionGetToggleOptionSync(id: widget.id, arg: opt);
           },
           padding: padding,
           dismissOnClicked: true,
+          dismissCallback: _menuDismissCallback,
         );
       }());
     }
@@ -1175,6 +1219,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
       },
       padding: padding,
       dismissOnClicked: true,
+      dismissCallback: _menuDismissCallback,
     ));
 
     final perms = widget.ffi.ffiModel.permissions;
@@ -1212,6 +1257,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
           },
           padding: padding,
           dismissOnClicked: true,
+          dismissCallback: _menuDismissCallback,
         ));
       }
     }
@@ -1283,6 +1329,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
                         onPressed: () {
                           if (Navigator.canPop(context)) {
                             Navigator.pop(context);
+                            _menuDismissCallback();
                           }
                           showKBLayoutTypeChooser(
                               localPlatform, widget.ffi.dialogManager);
@@ -1295,6 +1342,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
           proc: () {},
           padding: EdgeInsets.zero,
           dismissOnClicked: false,
+          dismissCallback: _menuDismissCallback,
         ),
       );
     }
@@ -1314,6 +1362,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
       },
       padding: padding,
       dismissOnClicked: dismissOnClicked,
+      dismissCallback: _menuDismissCallback,
     );
   }
 }
