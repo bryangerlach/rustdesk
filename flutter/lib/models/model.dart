@@ -13,6 +13,7 @@ import 'package:flutter_hbb/models/ab_model.dart';
 import 'package:flutter_hbb/models/chat_model.dart';
 import 'package:flutter_hbb/models/file_model.dart';
 import 'package:flutter_hbb/models/group_model.dart';
+import 'package:flutter_hbb/models/peer_tab_model.dart';
 import 'package:flutter_hbb/models/server_model.dart';
 import 'package:flutter_hbb/models/user_model.dart';
 import 'package:flutter_hbb/models/state_model.dart';
@@ -199,6 +200,9 @@ class FfiModel with ChangeNotifier {
         final peer_id = evt['peer_id'].toString();
         await bind.sessionSwitchSides(id: peer_id);
         closeConnection(id: peer_id);
+      } else if (name == "on_url_scheme_received") {
+        final url = evt['url'].toString();
+        parseRustdeskUri(url);
       }
     };
   }
@@ -1289,8 +1293,9 @@ class FFI {
   late final AbModel abModel; // global
   late final GroupModel groupModel; // global
   late final UserModel userModel; // global
+  late final PeerTabModel peerTabModel; // global
   late final QualityMonitorModel qualityMonitorModel; // session
-  late final RecordingModel recordingModel; // recording
+  late final RecordingModel recordingModel; // session
   late final InputModel inputModel; // session
 
   FFI() {
@@ -1302,6 +1307,7 @@ class FFI {
     chatModel = ChatModel(WeakReference(this));
     fileModel = FileModel(WeakReference(this));
     userModel = UserModel(WeakReference(this));
+    peerTabModel = PeerTabModel(WeakReference(this));
     abModel = AbModel(WeakReference(this));
     groupModel = GroupModel(WeakReference(this));
     qualityMonitorModel = QualityMonitorModel(WeakReference(this));

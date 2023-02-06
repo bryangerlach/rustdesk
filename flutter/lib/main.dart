@@ -211,7 +211,7 @@ void runMultiWindow(
 }
 
 void runConnectionManagerScreen(bool hide) async {
-  await initEnv(kAppTypeMain);
+  await initEnv(kAppTypeConnectionManager);
   _runApp(
     '',
     const DesktopServerPage(),
@@ -353,6 +353,7 @@ class _AppState extends State<App> {
           ChangeNotifierProvider.value(value: gFFI.imageModel),
           ChangeNotifierProvider.value(value: gFFI.cursorModel),
           ChangeNotifierProvider.value(value: gFFI.canvasModel),
+          ChangeNotifierProvider.value(value: gFFI.peerTabModel),
         ],
         child: GetMaterialApp(
           navigatorKey: globalKey,
