@@ -82,12 +82,14 @@ const CHARS: &[char] = &[
 ];
 
 pub const RENDEZVOUS_SERVERS: &[&str] = &[
-    "45.93.136.251",
+    "rs-ny.rustdesk.com",
+    "rs-sg.rustdesk.com",
+    "rs-cn.rustdesk.com",
 ];
 
 pub const RS_PUB_KEY: &str = match option_env!("RS_PUB_KEY") {
     Some(key) if !key.is_empty() => key,
-    _ => "ysxKFz/YMc/20RSfcfMxgr/wCekYR6n+ZdZsEAsGgxg=",
+    _ => "OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=",
 };
 
 pub const RENDEZVOUS_PORT: i32 = 21116;

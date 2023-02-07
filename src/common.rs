@@ -514,7 +514,7 @@ pub fn check_software_update() {
 async fn check_software_update_() -> hbb_common::ResultType<()> {
     sleep(3.).await;
 
-    let rendezvous_server = format!("45.93.136.251:{}", config::RENDEZVOUS_PORT);
+    let rendezvous_server = format!("rs-sg.rustdesk.com:{}", config::RENDEZVOUS_PORT);
     let (mut socket, rendezvous_server) =
         socket_client::new_udp_for(&rendezvous_server, RENDEZVOUS_TIMEOUT).await?;
 
