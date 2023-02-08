@@ -18,7 +18,6 @@ import 'package:flutter_hbb/models/server_model.dart';
 import 'package:flutter_hbb/models/user_model.dart';
 import 'package:flutter_hbb/models/state_model.dart';
 import 'package:flutter_hbb/common/shared_state.dart';
-import 'package:flutter_hbb/utils/multi_window_manager.dart';
 import 'package:tuple/tuple.dart';
 import 'package:image/image.dart' as img2;
 import 'package:flutter_custom_cursor/cursor_manager.dart';
@@ -26,7 +25,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 
 import '../common.dart';
-import '../common/shared_state.dart';
 import '../utils/image.dart' as img;
 import '../mobile/widgets/dialog.dart';
 import 'input_model.dart';
@@ -203,6 +201,23 @@ class FfiModel with ChangeNotifier {
       } else if (name == "on_url_scheme_received") {
         final url = evt['url'].toString();
         parseRustdeskUri(url);
+      } else if (name == "on_voice_call_waiting") {
+        // Waiting for the response from the peer.
+        parent.target?.chatModel.onVoiceCallWaiting();
+      } else if (name == "on_voice_call_started") {
+        // Voice call is connected.
+        parent.target?.chatModel.onVoiceCallStarted();
+      } else if (name == "on_voice_call_closed") {
+        // Voice call is closed with reason.
+        final reason = evt['reason'].toString();
+        parent.target?.chatModel.onVoiceCallClosed(reason);
+      } else if (name == "on_voice_call_incoming") {
+        // Voice call is requested by the peer.
+        parent.target?.chatModel.onVoiceCallIncoming();
+      } else if (name == "update_voice_call_state") {
+        parent.target?.serverModel.updateVoiceCallState(evt);
+      } else {
+        debugPrint("Unknown event name: $name");
       }
     };
   }
@@ -1376,13 +1391,13 @@ class FFI {
           canvasModel.y, canvasModel.scale, ffiModel.pi.currentDisplay);
     }
     bind.sessionClose(id: id);
-    id = '';
     imageModel.update(null);
     cursorModel.clear();
     ffiModel.clear();
     canvasModel.clear();
     inputModel.resetModifiers();
     debugPrint('model $id closed');
+    id = '';
   }
 
   void setMethodCallHandler(FMethod callback) {

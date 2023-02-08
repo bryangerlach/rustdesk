@@ -9,6 +9,7 @@ import 'package:flutter_hbb/models/chat_model.dart';
 import 'package:flutter_hbb/models/state_model.dart';
 import 'package:flutter_hbb/consts.dart';
 import 'package:flutter_hbb/utils/multi_window_manager.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 import 'package:debounce_throttle/debounce_throttle.dart';
@@ -427,6 +428,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
     menubarItems.add(_buildKeyboard(context));
     if (!isWeb) {
       menubarItems.add(_buildChat(context));
+      menubarItems.add(_buildVoiceCall(context));
     }
     menubarItems.add(_buildRecording(context));
     menubarItems.add(_buildClose(context));
@@ -477,20 +479,6 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
               Icons.fullscreen,
               color: _MenubarTheme.commonColor,
             ),
-    );
-  }
-
-  Widget _buildChat(BuildContext context) {
-    return IconButton(
-      tooltip: translate('Chat'),
-      onPressed: () {
-        widget.ffi.chatModel.changeCurrentID(ChatModel.clientModeID);
-        widget.ffi.chatModel.toggleChatOverlay();
-      },
-      icon: const Icon(
-        Icons.message,
-        color: _MenubarTheme.commonColor,
-      ),
     );
   }
 
@@ -671,12 +659,17 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
                       ? translate('Stop session recording')
                       : translate('Start session recording'),
                   onPressed: () => value.toggle(),
-                  icon: Icon(
-                    value.start
-                        ? Icons.pause_circle_filled
-                        : Icons.videocam_outlined,
-                    color: _MenubarTheme.commonColor,
-                  ),
+                  icon: value.start
+                      ? Icon(
+                          Icons.pause_circle_filled,
+                          color: _MenubarTheme.commonColor,
+                        )
+                      : SvgPicture.asset(
+                          "assets/record_screen.svg",
+                          color: _MenubarTheme.commonColor,
+                          width: Theme.of(context).iconTheme.size ?? 22.0,
+                          height: Theme.of(context).iconTheme.size ?? 22.0,
+                        ),
                 ));
       } else {
         return Offstage();
@@ -695,6 +688,130 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
         color: _MenubarTheme.commonColor,
       ),
     );
+  }
+
+  final _chatButtonKey = GlobalKey();
+  Widget _buildChat(BuildContext context) {
+    FfiModel ffiModel = Provider.of<FfiModel>(context);
+    return mod_menu.PopupMenuButton(
+      key: _chatButtonKey,
+      padding: EdgeInsets.zero,
+      icon: SvgPicture.asset(
+        "assets/chat.svg",
+        color: _MenubarTheme.commonColor,
+        width: Theme.of(context).iconTheme.size ?? 24.0,
+        height: Theme.of(context).iconTheme.size ?? 24.0,
+      ),
+      tooltip: translate('Chat'),
+      position: mod_menu.PopupMenuPosition.under,
+      itemBuilder: (BuildContext context) => _getChatMenu(context)
+          .map((entry) => entry.build(
+              context,
+              const MenuConfig(
+                commonColor: _MenubarTheme.commonColor,
+                height: _MenubarTheme.height,
+                dividerHeight: _MenubarTheme.dividerHeight,
+              )))
+          .expand((i) => i)
+          .toList(),
+    );
+  }
+
+  Widget _getVoiceCallIcon() {
+    switch (widget.ffi.chatModel.voiceCallStatus.value) {
+      case VoiceCallStatus.waitingForResponse:
+        return IconButton(
+            onPressed: () {
+              widget.ffi.chatModel.closeVoiceCall(widget.id);
+            },
+            icon: SvgPicture.asset(
+              "assets/voice_call_waiting.svg",
+              color: Colors.red,
+              width: Theme.of(context).iconTheme.size ?? 20.0,
+              height: Theme.of(context).iconTheme.size ?? 20.0,
+            ));
+      case VoiceCallStatus.connected:
+        return IconButton(
+          onPressed: () {
+            widget.ffi.chatModel.closeVoiceCall(widget.id);
+          },
+          icon: Icon(
+            Icons.phone_disabled_rounded,
+            color: Colors.red,
+            size: Theme.of(context).iconTheme.size ?? 22.0,
+          ),
+        );
+      default:
+        return const Offstage();
+    }
+  }
+
+  String? _getVoiceCallTooltip() {
+    switch (widget.ffi.chatModel.voiceCallStatus.value) {
+      case VoiceCallStatus.waitingForResponse:
+        return "Waiting";
+      case VoiceCallStatus.connected:
+        return "Disconnect";
+      default:
+        return null;
+    }
+  }
+
+  Widget _buildVoiceCall(BuildContext context) {
+    return Obx(
+      () {
+        final tooltipText = _getVoiceCallTooltip();
+        return tooltipText == null
+            ? const Offstage()
+            : IconButton(
+                padding: EdgeInsets.zero,
+                icon: _getVoiceCallIcon(),
+                tooltip: translate(tooltipText),
+                onPressed: () => bind.sessionRequestVoiceCall(id: widget.id),
+              );
+      },
+    );
+  }
+
+  List<MenuEntryBase<String>> _getChatMenu(BuildContext context) {
+    final List<MenuEntryBase<String>> chatMenu = [];
+    const EdgeInsets padding = EdgeInsets.only(left: 14.0, right: 5.0);
+    chatMenu.addAll([
+      MenuEntryButton<String>(
+        childBuilder: (TextStyle? style) => Text(
+          translate('Text chat'),
+          style: style,
+        ),
+        proc: () {
+          RenderBox? renderBox =
+              _chatButtonKey.currentContext?.findRenderObject() as RenderBox?;
+
+          Offset? initPos;
+          if (renderBox != null) {
+            final pos = renderBox.localToGlobal(Offset.zero);
+            initPos = Offset(pos.dx, pos.dy + _MenubarTheme.dividerHeight);
+          }
+
+          widget.ffi.chatModel.changeCurrentID(ChatModel.clientModeID);
+          widget.ffi.chatModel.toggleChatOverlay(chatInitPos: initPos);
+        },
+        padding: padding,
+        dismissOnClicked: true,
+      ),
+      MenuEntryButton<String>(
+        childBuilder: (TextStyle? style) => Text(
+          translate('Voice call'),
+          style: style,
+        ),
+        proc: () {
+          // Request a voice call.
+          bind.sessionRequestVoiceCall(id: widget.id);
+        },
+        padding: padding,
+        dismissOnClicked: true,
+      ),
+    ]);
+    return chatMenu;
   }
 
   List<MenuEntryBase<String>> _getControlMenu(BuildContext context) {
@@ -886,7 +1003,6 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
       //     ));
       //   }
     }
-
     return displayMenu;
   }
 
@@ -1339,6 +1455,8 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
     if (perms['audio'] != false) {
       displayMenu
           .add(_createSwitchMenuEntry('Mute', 'disable-audio', padding, true));
+      displayMenu
+          .add(_createSwitchMenuEntry('Mute', 'disable-audio', padding, true));
     }
 
     if (Platform.isWindows &&
@@ -1384,25 +1502,29 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
         text: translate('Ratio'),
         optionsGetter: () {
           List<MenuEntryRadioOption> list = [];
-          List<String> modes = ["legacy"];
+          List<KeyboardModeMenu> modes = [
+            KeyboardModeMenu(key: 'legacy', menu: 'Legacy mode'),
+            KeyboardModeMenu(key: 'map', menu: 'Map mode'),
+            KeyboardModeMenu(key: 'translate', menu: 'Translate mode'),
+          ];
 
-          if (bind.sessionIsKeyboardModeSupported(id: widget.id, mode: "map")) {
-            modes.add("map");
-          }
-
-          for (String mode in modes) {
-            if (mode == "legacy") {
+          for (KeyboardModeMenu mode in modes) {
+            if (bind.sessionIsKeyboardModeSupported(
+                id: widget.id, mode: mode.key)) {
+              if (mode.key == 'translate') {
+                if (!Platform.isWindows ||
+                    widget.ffi.ffiModel.pi.platform != kPeerPlatformWindows) {
+                  continue;
+                }
+              }
               list.add(MenuEntryRadioOption(
-                  text: translate('Legacy mode'), value: 'legacy'));
-            } else if (mode == "map") {
-              list.add(MenuEntryRadioOption(
-                  text: translate('Map mode'), value: 'map'));
+                  text: translate(mode.menu), value: mode.key));
             }
           }
           return list;
         },
         curOptionGetter: () async {
-          return await bind.sessionGetKeyboardMode(id: widget.id) ?? "legacy";
+          return await bind.sessionGetKeyboardMode(id: widget.id) ?? 'legacy';
         },
         optionSetter: (String oldValue, String newValue) async {
           await bind.sessionSetKeyboardMode(id: widget.id, value: newValue);
@@ -1725,4 +1847,11 @@ class _DraggableShowHideState extends State<_DraggableShowHide> {
       ),
     );
   }
+}
+
+class KeyboardModeMenu {
+  final String key;
+  final String menu;
+
+  KeyboardModeMenu({required this.key, required this.menu});
 }
