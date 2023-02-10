@@ -49,6 +49,11 @@ int androidVersion = 0;
 int windowsBuildNumber = 0;
 DesktopType? desktopType;
 
+/// Check if the app is running with single view mode.
+bool isSingleViewApp() {
+  return desktopType == DesktopType.cm;
+}
+
 /// * debug or test only, DO NOT enable in release build
 bool isTest = false;
 
@@ -648,8 +653,6 @@ class CustomAlertDialog extends StatelessWidget {
       child: AlertDialog(
         scrollable: true,
         title: title,
-        contentPadding: EdgeInsets.fromLTRB(
-            contentPadding ?? padding, 25, contentPadding ?? padding, 10),
         content: ConstrainedBox(
           constraints: contentBoxConstraints,
           child: Theme(
