@@ -653,6 +653,9 @@ class CustomAlertDialog extends StatelessWidget {
       child: AlertDialog(
         scrollable: true,
         title: title,
+        titlePadding: EdgeInsets.fromLTRB(padding, 24, padding, 0),
+        contentPadding: EdgeInsets.fromLTRB(
+            contentPadding ?? padding, 25, contentPadding ?? padding, 10),
         content: ConstrainedBox(
           constraints: contentBoxConstraints,
           child: Theme(
@@ -1732,6 +1735,7 @@ Future<void> updateSystemWindowTheme() async {
     }
   }
 }
+
 /// macOS only
 ///
 /// Note: not found a general solution for rust based AVFoundation bingding.
@@ -1758,4 +1762,28 @@ Future<PermissionAuthorizeType> osxCanRecordAudio() async {
 
 Future<bool> osxRequestAudio() async {
   return await kMacOSPermChannel.invokeMethod("requestRecordAudio");
+}
+
+class DraggableNeverScrollableScrollPhysics extends ScrollPhysics {
+  /// Creates scroll physics that does not let the user scroll.
+  const DraggableNeverScrollableScrollPhysics({super.parent});
+
+  @override
+  DraggableNeverScrollableScrollPhysics applyTo(ScrollPhysics? ancestor) {
+    return DraggableNeverScrollableScrollPhysics(parent: buildParent(ancestor));
+  }
+
+  @override
+  bool shouldAcceptUserOffset(ScrollMetrics position) {
+    // TODO: find a better solution to check if the offset change is caused by the scrollbar.
+    // Workaround: when dragging with the scrollbar, it always triggers an [IdleScrollActivity].
+    if (position is ScrollPositionWithSingleContext) {
+      // ignore: invalid_use_of_protected_member, invalid_use_of_visible_for_testing_member
+      return position.activity is IdleScrollActivity;
+    }
+    return false;
+  }
+
+  @override
+  bool get allowImplicitScrolling => false;
 }

@@ -66,7 +66,8 @@ class _ConnectionPageState extends State<ConnectionPage>
     _idFocusNode.addListener(() {
       _idInputFocused.value = _idFocusNode.hasFocus;
       // select all to faciliate removing text, just following the behavior of address input of chrome
-      _idController.selection = TextSelection(baseOffset: 0, extentOffset: _idController.value.text.length);
+      _idController.selection = TextSelection(
+          baseOffset: 0, extentOffset: _idController.value.text.length);
     });
     windowManager.addListener(this);
   }
@@ -117,32 +118,31 @@ class _ConnectionPageState extends State<ConnectionPage>
       return Column(
         children: [
           Expanded(
-            child: DesktopScrollWrapper(
-              scrollController: _scrollController,
-              child: CustomScrollView(
-                controller: _scrollController,
-                physics: NeverScrollableScrollPhysics(),
-                slivers: [
-                  SliverList(
-                      delegate: SliverChildListDelegate([
-                    Row(
-                      children: [
-                        Flexible(child: _buildRemoteIDTextField(context)),
-                      ],
-                    ).marginOnly(top: 22),
-                    SizedBox(height: 12),
-                    Divider().paddingOnly(right: 12),
-                  ])),
-                  SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: PeerTabPage().paddingOnly(right: 12.0),
-                  )
-                ],
-              ).paddingOnly(left: 12.0),
-            ),
-          ),
-          const Divider(height: 1),
-          buildStatus()
+              child: DesktopScrollWrapper(
+                scrollController: _scrollController,
+                child: CustomScrollView(
+                  controller: _scrollController,
+                  physics: DraggableNeverScrollableScrollPhysics(),
+                  slivers: [
+                    SliverList(
+                        delegate: SliverChildListDelegate([
+                      Row(
+                        children: [
+                          Flexible(child: _buildRemoteIDTextField(context)),
+                        ],
+                      ).marginOnly(top: 22),
+                      SizedBox(height: 12),
+                      Divider().paddingOnly(right: 12),
+                    ])),
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: PeerTabPage().paddingOnly(right: 12.0),
+                    )
+                  ],
+                ).paddingOnly(left: 12.0),
+              ),
+              const Divider(height: 1),
+              buildStatus())
         ],
       );
     } else {

@@ -75,6 +75,7 @@ class _DesktopHomePageState extends State<DesktopHomePage>
           scrollController: _leftPaneScrollController,
           child: SingleChildScrollView(
             controller: _leftPaneScrollController,
+            physics: DraggableNeverScrollableScrollPhysics(),
             child: Column(
               children: [
                 buildTip(context),
@@ -634,7 +635,7 @@ void setPasswordDialog() async {
                         border: const OutlineInputBorder(),
                         errorText: errMsg0.isNotEmpty ? errMsg0 : null),
                     controller: p0,
-                    focusNode: FocusNode()..requestFocus(),
+                    autofocus: true,
                     onChanged: (value) {
                       rxPass.value = value.trim();
                     },
