@@ -119,30 +119,30 @@ class _ConnectionPageState extends State<ConnectionPage>
         children: [
           Expanded(
               child: DesktopScrollWrapper(
-                scrollController: _scrollController,
-                child: CustomScrollView(
-                  controller: _scrollController,
-                  physics: DraggableNeverScrollableScrollPhysics(),
-                  slivers: [
-                    SliverList(
-                        delegate: SliverChildListDelegate([
-                      Row(
-                        children: [
-                          Flexible(child: _buildRemoteIDTextField(context)),
-                        ],
-                      ).marginOnly(top: 22),
-                      SizedBox(height: 12),
-                      Divider().paddingOnly(right: 12),
-                    ])),
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: PeerTabPage().paddingOnly(right: 12.0),
-                    )
-                  ],
-                ).paddingOnly(left: 12.0),
-              ),
-              const Divider(height: 1),
-              buildStatus())
+            scrollController: _scrollController,
+            child: CustomScrollView(
+              controller: _scrollController,
+              physics: DraggableNeverScrollableScrollPhysics(),
+              slivers: [
+                SliverList(
+                    delegate: SliverChildListDelegate([
+                  Row(
+                    children: [
+                      Flexible(child: _buildRemoteIDTextField(context)),
+                    ],
+                  ).marginOnly(top: 22),
+                  SizedBox(height: 12),
+                  Divider().paddingOnly(right: 12),
+                ])),
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: PeerTabPage().paddingOnly(right: 12.0),
+                )
+              ],
+            ).paddingOnly(left: 12.0),
+          )),
+          const Divider(height: 1),
+          buildStatus()
         ],
       );
     } else {
