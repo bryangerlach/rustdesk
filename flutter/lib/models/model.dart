@@ -33,6 +33,7 @@ import 'input_model.dart';
 import 'platform_model.dart';
 
 typedef HandleMsgBox = Function(Map<String, dynamic> evt, String id);
+typedef ReconnectHandle = Function(OverlayDialogManager, String, bool);
 final _waitForImage = <String, bool>{};
 
 class FfiModel with ChangeNotifier {
@@ -298,6 +299,8 @@ class FfiModel with ChangeNotifier {
       showWaitUacDialog(id, dialogManager, type);
     } else if (type == 'elevation-error') {
       showElevationError(id, type, title, text, dialogManager);
+    } else if (type == "relay-hint") {
+      showRelayHintDialog(id, type, title, text, dialogManager);
     } else {
       var hasRetry = evt['hasRetry'] == 'true';
       showMsgBox(id, type, title, text, link, hasRetry, dialogManager);
@@ -308,19 +311,58 @@ class FfiModel with ChangeNotifier {
   showMsgBox(String id, String type, String title, String text, String link,
       bool hasRetry, OverlayDialogManager dialogManager,
       {bool? hasCancel}) {
-    msgBox(id, type, title, text, link, dialogManager, hasCancel: hasCancel);
+    msgBox(id, type, title, text, link, dialogManager,
+        hasCancel: hasCancel, reconnect: reconnect);
     _timer?.cancel();
     if (hasRetry) {
       _timer = Timer(Duration(seconds: _reconnects), () {
-        bind.sessionReconnect(id: id);
-        clearPermissions();
-        dialogManager.showLoading(translate('Connecting...'),
-            onCancel: closeConnection);
+        reconnect(dialogManager, id, false);
       });
       _reconnects *= 2;
     } else {
       _reconnects = 1;
     }
+  }
+
+  void reconnect(
+      OverlayDialogManager dialogManager, String id, bool forceRelay) {
+    bind.sessionReconnect(id: id, forceRelay: forceRelay);
+    clearPermissions();
+    dialogManager.showLoading(translate('Connecting...'),
+        onCancel: closeConnection);
+  }
+
+  void showRelayHintDialog(String id, String type, String title, String text,
+      OverlayDialogManager dialogManager) {
+    dialogManager.show(tag: '$id-$type', (setState, close) {
+      onClose() {
+        closeConnection();
+        close();
+      }
+
+      final style =
+          ElevatedButton.styleFrom(backgroundColor: Colors.green[700]);
+      return CustomAlertDialog(
+        title: null,
+        content: msgboxContent(type, title,
+            "${translate(text)}\n\n${translate('relay_hint_tip')}"),
+        actions: [
+          dialogButton('Close', onPressed: onClose, isOutline: true),
+          dialogButton('Retry',
+              onPressed: () => reconnect(dialogManager, id, false)),
+          dialogButton('Connect via relay',
+              onPressed: () => reconnect(dialogManager, id, true),
+              buttonStyle: style),
+          dialogButton('Always connect via relay', onPressed: () {
+            const option = 'force-always-relay';
+            bind.sessionPeerOption(
+                id: id, name: option, value: bool2option(option, true));
+            reconnect(dialogManager, id, true);
+          }, buttonStyle: style),
+        ],
+        onCancel: onClose,
+      );
+    });
   }
 
   /// Handle the peer info event based on [evt].
@@ -1341,7 +1383,8 @@ class FFI {
   void start(String id,
       {bool isFileTransfer = false,
       bool isPortForward = false,
-      String? switchUuid}) {
+      String? switchUuid,
+      bool? forceRelay}) {
     assert(!(isFileTransfer && isPortForward), 'more than one connect type');
     if (isFileTransfer) {
       connType = ConnType.fileTransfer;
@@ -1357,11 +1400,11 @@ class FFI {
     }
     // ignore: unused_local_variable
     final addRes = bind.sessionAddSync(
-      id: id,
-      isFileTransfer: isFileTransfer,
-      isPortForward: isPortForward,
-      switchUuid: switchUuid ?? "",
-    );
+        id: id,
+        isFileTransfer: isFileTransfer,
+        isPortForward: isPortForward,
+        switchUuid: switchUuid ?? "",
+        forceRelay: forceRelay ?? false);
     final stream = bind.sessionStart(id: id);
     final cb = ffiModel.startEventListener(id);
     () async {

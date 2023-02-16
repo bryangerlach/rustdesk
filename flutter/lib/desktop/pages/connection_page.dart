@@ -159,8 +159,11 @@ class _ConnectionPageState extends State<ConnectionPage>
   /// Callback for the connect button.
   /// Connects to the selected peer.
   void onConnect({bool isFileTransfer = false}) {
-    final id = _idController.id;
-    connect(context, id, isFileTransfer: isFileTransfer);
+    var id = _idController.id;
+    var forceRelay = id.endsWith(r'/r');
+    if (forceRelay) id = id.substring(0, id.length - 2);
+    connect(context, id,
+        isFileTransfer: isFileTransfer, forceRelay: forceRelay);
   }
 
   /// UI for the remote ID TextField.

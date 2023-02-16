@@ -771,7 +771,7 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
             : MenuButton(
                 icon: _getVoiceCallIcon(),
                 tooltip: translate(tooltipText),
-                onPressed: () => bind.sessionRequestVoiceCall(id: widget.id),
+                onPressed: () => bind.sessionCloseVoiceCall(id: widget.id),
                 color: _MenubarTheme.redColor,
                 hoverColor: _MenubarTheme.hoverRedColor,
               );
@@ -1459,8 +1459,6 @@ class _RemoteMenubarState extends State<RemoteMenubar> {
     final pi = widget.ffi.ffiModel.pi;
 
     if (perms['audio'] != false) {
-      displayMenu
-          .add(_createSwitchMenuEntry('Mute', 'disable-audio', padding, true));
       displayMenu
           .add(_createSwitchMenuEntry('Mute', 'disable-audio', padding, true));
     }

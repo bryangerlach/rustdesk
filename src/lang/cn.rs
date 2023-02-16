@@ -209,7 +209,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Closed manually by the peer", "被对方手动关闭"),
         ("Enable remote configuration modification", "允许远程修改配置"),
         ("Run without install", "无安装运行"),
-        ("Always connected via relay", "强制走中继连接"),
+        ("Connect via relay", "中继连接"),
         ("Always connect via relay", "强制走中继连接"),
         ("whitelist_tip", "只有白名单里的ip才能访问我"),
         ("Login", "登录"),
@@ -422,7 +422,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Ask the remote user for authentication", "请求远端用户授权"),
         ("Choose this if the remote account is administrator", "当对面电脑是管理员账号时选择该选项"),
         ("Transmit the username and password of administrator", "发送管理员账号的用户名密码"),
-        ("still_click_uac_tip", "依然需要被控端用戶在運行 RustDesk 的 UAC 窗口點擊確認。"),
+        ("still_click_uac_tip", "依然需要被控端用户在运行 RustDesk 的 UAC 窗口点击确认。"),
         ("Request Elevation", "请求提权"),
         ("wait_accept_uac_tip", "请等待远端用户确认 UAC 对话框。"),
         ("Elevate successfully", "提权成功"),
@@ -449,5 +449,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Voice call", "语音通话"),
         ("Text chat", "文字聊天"),
         ("Stop voice call", "停止语音聊天"),
-    ].iter().cloned().collect();
+        ("relay_hint_tip", "可能无法直连，可以尝试中继连接。\n另外，如果想直接使用中继连接，可以在ID后面添加/r，或者在卡片选项里选择强制走中继连接。"),
+        ("Reconnect", "重连"),
+        ].iter().cloned().collect();
 }

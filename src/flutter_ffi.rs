@@ -1,11 +1,13 @@
 use crate::{
     client::file_trait::FileManager,
     common::make_fd_to_json,
-    common::{get_default_sound_input, is_keyboard_mode_supported},
+    common::is_keyboard_mode_supported,
     flutter::{self, SESSIONS},
     flutter::{session_add, session_start_},
     ui_interface::{self, *},
 };
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+use crate::common::get_default_sound_input;
 use flutter_rust_bridge::{StreamSink, SyncReturn};
 use hbb_common::{
     config::{self, LocalConfig, PeerConfig, ONLINE},
@@ -83,8 +85,15 @@ pub fn session_add_sync(
     is_file_transfer: bool,
     is_port_forward: bool,
     switch_uuid: String,
+    force_relay: bool,
 ) -> SyncReturn<String> {
-    if let Err(e) = session_add(&id, is_file_transfer, is_port_forward, &switch_uuid) {
+    if let Err(e) = session_add(
+        &id,
+        is_file_transfer,
+        is_port_forward,
+        &switch_uuid,
+        force_relay,
+    ) {
         SyncReturn(format!("Failed to add session with id {}, {}", &id, e))
     } else {
         SyncReturn("".to_owned())
@@ -149,9 +158,9 @@ pub fn session_record_screen(id: String, start: bool, width: usize, height: usiz
     }
 }
 
-pub fn session_reconnect(id: String) {
+pub fn session_reconnect(id: String, force_relay: bool) {
     if let Some(session) = SESSIONS.read().unwrap().get(&id) {
-        session.reconnect();
+        session.reconnect(force_relay);
     }
 }
 

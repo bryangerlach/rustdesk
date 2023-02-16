@@ -3,42 +3,44 @@ use std::{
     net::SocketAddr,
     ops::{Deref, Not},
     str::FromStr,
-    sync::{Arc, atomic::AtomicBool, mpsc, Mutex, RwLock},
+    sync::{mpsc, Arc, Mutex, RwLock},
 };
 
 pub use async_trait::async_trait;
 use bytes::Bytes;
 #[cfg(not(any(target_os = "android", target_os = "linux")))]
 use cpal::{
-    Device,
-    Host, StreamConfig, traits::{DeviceTrait, HostTrait, StreamTrait},
+    traits::{DeviceTrait, HostTrait, StreamTrait},
+    Device, Host, StreamConfig,
 };
 use magnum_opus::{Channels::*, Decoder as AudioDecoder};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
 
 pub use file_trait::FileManager;
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+use hbb_common::tokio::sync::mpsc::UnboundedSender;
 use hbb_common::{
-    AddrMangle,
     allow_err,
     anyhow::{anyhow, Context},
     bail,
     config::{
-        Config, CONNECT_TIMEOUT, PeerConfig, PeerInfoSerde, READ_TIMEOUT, RELAY_PORT,
+        Config, PeerConfig, PeerInfoSerde, CONNECT_TIMEOUT, READ_TIMEOUT, RELAY_PORT,
         RENDEZVOUS_TIMEOUT,
-    }, get_version_number,
-    log,
-    message_proto::{*, option_message::BoolOption},
+    },
+    get_version_number, log,
+    message_proto::{option_message::BoolOption, *},
     protobuf::Message as _,
     rand,
     rendezvous_proto::*,
-    ResultType,
     socket_client,
     sodiumoxide::crypto::{box_, secretbox, sign},
-    Stream, timeout, tokio::time::Duration,
+    timeout,
+    tokio::time::Duration,
+    AddrMangle, ResultType, Stream,
 };
-pub use helper::*;
 pub use helper::LatencyController;
+pub use helper::*;
 use scrap::{
     codec::{Decoder, DecoderCfg},
     record::{Recorder, RecorderContext},
@@ -50,20 +52,29 @@ use crate::{
     server::video_service::{SCRAP_X11_REF_URL, SCRAP_X11_REQUIRED},
 };
 
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+use crate::{
+    common::{check_clipboard, ClipboardContext, CLIPBOARD_INTERVAL},
+    ui_session_interface::SessionPermissionConfig,
+};
+
 pub use super::lang::*;
 
 pub mod file_trait;
 pub mod helper;
 pub mod io_loop;
 
-pub static SERVER_KEYBOARD_ENABLED: AtomicBool = AtomicBool::new(true);
-pub static SERVER_FILE_TRANSFER_ENABLED: AtomicBool = AtomicBool::new(true);
-pub static SERVER_CLIPBOARD_ENABLED: AtomicBool = AtomicBool::new(true);
 pub const MILLI1: Duration = Duration::from_millis(1);
 pub const SEC30: Duration = Duration::from_secs(30);
 
 /// Client of the remote desktop.
 pub struct Client;
+
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+struct TextClipboardState {
+    is_required: bool,
+    running: bool,
+}
 
 #[cfg(not(any(target_os = "android", target_os = "linux")))]
 lazy_static::lazy_static! {
@@ -73,6 +84,8 @@ lazy_static::lazy_static! {
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
 lazy_static::lazy_static! {
     static ref ENIGO: Arc<Mutex<enigo::Enigo>> = Arc::new(Mutex::new(enigo::Enigo::new()));
+    static ref OLD_CLIPBOARD_TEXT: Arc<Mutex<String>> = Default::default();
+    static ref TEXT_CLIPBOARD_STATE: Arc<Mutex<TextClipboardState>> = Arc::new(Mutex::new(TextClipboardState::new()));
 }
 
 #[cfg(not(any(target_os = "android", target_os = "ios")))]
@@ -598,6 +611,86 @@ impl Client {
         conn.send(&msg_out).await?;
         Ok(conn)
     }
+
+    #[inline]
+    #[cfg(feature = "flutter")]
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    pub fn set_is_text_clipboard_required(b: bool) {
+        TEXT_CLIPBOARD_STATE.lock().unwrap().is_required = b;
+    }
+
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    fn try_stop_clipboard(_self_id: &str) {
+        #[cfg(feature = "flutter")]
+        if crate::flutter::other_sessions_running(_self_id) {
+            return;
+        }
+        TEXT_CLIPBOARD_STATE.lock().unwrap().running = false;
+    }
+
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    fn try_start_clipboard(_conf_tx: Option<(SessionPermissionConfig, UnboundedSender<Data>)>) {
+        let mut clipboard_lock = TEXT_CLIPBOARD_STATE.lock().unwrap();
+        if clipboard_lock.running {
+            return;
+        }
+
+        match ClipboardContext::new() {
+            Ok(mut ctx) => {
+                clipboard_lock.running = true;
+                // ignore clipboard update before service start
+                check_clipboard(&mut ctx, Some(&OLD_CLIPBOARD_TEXT));
+                std::thread::spawn(move || {
+                    log::info!("Start text clipboard loop");
+                    loop {
+                        std::thread::sleep(Duration::from_millis(CLIPBOARD_INTERVAL));
+                        if !TEXT_CLIPBOARD_STATE.lock().unwrap().running {
+                            break;
+                        }
+
+                        if !TEXT_CLIPBOARD_STATE.lock().unwrap().is_required {
+                            continue;
+                        }
+
+                        if let Some(msg) = check_clipboard(&mut ctx, Some(&OLD_CLIPBOARD_TEXT)) {
+                            #[cfg(feature = "flutter")]
+                            crate::flutter::send_text_clipboard_msg(msg);
+                            #[cfg(not(feature = "flutter"))]
+                            if let Some((cfg, tx)) = &_conf_tx {
+                                if cfg.is_text_clipboard_required() {
+                                    let _ = tx.send(Data::Message(msg));
+                                }
+                            }
+                        }
+                    }
+                    log::info!("Stop text clipboard loop");
+                });
+            }
+            Err(err) => {
+                log::error!("Failed to start clipboard service of client: {}", err);
+            }
+        }
+    }
+
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    fn get_current_text_clipboard_msg() -> Option<Message> {
+        let txt = &*OLD_CLIPBOARD_TEXT.lock().unwrap();
+        if txt.is_empty() {
+            None
+        } else {
+            Some(crate::create_clipboard_msg(txt.clone()))
+        }
+    }
+}
+
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+impl TextClipboardState {
+    fn new() -> Self {
+        Self {
+            is_required: true,
+            running: false,
+        }
+    }
 }
 
 /// Audio handler for the [`Client`].
@@ -916,6 +1009,8 @@ pub struct LoginConfigHandler {
     pub direct: Option<bool>,
     pub received: bool,
     switch_uuid: Option<String>,
+    pub success_time: Option<hbb_common::tokio::time::Instant>,
+    pub direct_error_counter: usize,
 }
 
 impl Deref for LoginConfigHandler {
@@ -943,7 +1038,13 @@ impl LoginConfigHandler {
     ///
     /// * `id` - id of peer
     /// * `conn_type` - Connection type enum.
-    pub fn initialize(&mut self, id: String, conn_type: ConnType, switch_uuid: Option<String>) {
+    pub fn initialize(
+        &mut self,
+        id: String,
+        conn_type: ConnType,
+        switch_uuid: Option<String>,
+        force_relay: bool,
+    ) {
         self.id = id;
         self.conn_type = conn_type;
         let config = self.load_config();
@@ -952,10 +1053,12 @@ impl LoginConfigHandler {
         self.session_id = rand::random();
         self.supported_encoding = None;
         self.restarting_remote_device = false;
-        self.force_relay = !self.get_option("force-always-relay").is_empty();
+        self.force_relay = !self.get_option("force-always-relay").is_empty() || force_relay;
         self.direct = None;
         self.received = false;
         self.switch_uuid = switch_uuid;
+        self.success_time = None;
+        self.direct_error_counter = 0;
     }
 
     /// Check if the client should auto login.
@@ -1137,6 +1240,11 @@ impl LoginConfigHandler {
         }
         if !name.contains("block-input") {
             self.save_config(config);
+        }
+        #[cfg(feature = "flutter")]
+        #[cfg(not(any(target_os = "android", target_os = "ios")))]
+        if name == "disable-clipboard" {
+            crate::flutter::update_text_clipboard_required();
         }
         let mut misc = Misc::new();
         misc.set_option(option);
