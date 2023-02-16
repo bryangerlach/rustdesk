@@ -438,15 +438,17 @@ class ImageModel with ChangeNotifier {
     }
 
     final pid = parent.target?.id;
-    ui.decodeImageFromPixels(
+    img.decodeImageFromPixels(
         rgba,
         parent.target?.ffiModel.display.width ?? 0,
         parent.target?.ffiModel.display.height ?? 0,
-        isWeb ? ui.PixelFormat.rgba8888 : ui.PixelFormat.bgra8888, (image) {
+        isWeb ? ui.PixelFormat.rgba8888 : ui.PixelFormat.bgra8888,
+        onPixelsCopied: () {
+      // Unlock the rgba memory from rust codes.
+      platformFFI.nextRgba(id);
+    }).then((image) {
       if (parent.target?.id != pid) return;
       try {
-        // Unlock the rgba memory from rust codes.
-        platformFFI.nextRgba(id);
         // my throw exception, because the listener maybe already dispose
         update(image);
       } catch (e) {
@@ -1366,6 +1368,9 @@ class FFI {
       // Preserved for the rgba data.
       await for (final message in stream) {
         if (message is EventToUI_Event) {
+          if (message.field0 == "close") {
+            break;
+          }
           try {
             Map<String, dynamic> event = json.decode(message.field0);
             await cb(event);
@@ -1384,6 +1389,7 @@ class FFI {
           }
         }
       }
+      debugPrint('Exit session event loop');
     }();
     // every instance will bind a stream
     this.id = id;
