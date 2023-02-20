@@ -650,7 +650,7 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
                                   context, onChanged != null)),
                         ),
                       ],
-                    ).paddingSymmetric(horizontal: 10),
+                    ).paddingOnly(right: 10),
                     onTap: () => onChanged?.call(value),
                   ))
               .toList();
@@ -675,6 +675,7 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
             if (usePassword) radios[0],
             if (usePassword)
               _SubLabeledWidget(
+                  context,
                   'One-time password length',
                   Row(
                     children: [
@@ -756,9 +757,10 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
           controller.text = data['port'].toString();
           return Offstage(
             offstage: !enabled,
-            child: Row(children: [
-              _SubLabeledWidget(
-                'Port',
+            child: _SubLabeledWidget(
+              context,
+              'Port',
+              Row(children: [
                 SizedBox(
                   width: 80,
                   child: TextField(
@@ -772,28 +774,29 @@ class _SafetyState extends State<_Safety> with AutomaticKeepAliveClientMixin {
                     textAlign: TextAlign.end,
                     decoration: const InputDecoration(
                       hintText: '21118',
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.only(right: 5),
+                      border: OutlineInputBorder(),
+                      contentPadding:
+                          EdgeInsets.only(bottom: 10, top: 10, right: 10),
                       isCollapsed: true,
                     ),
-                  ),
+                  ).marginOnly(right: 15),
                 ),
-                enabled: enabled && !locked,
-              ).marginOnly(left: 5),
-              Obx(() => ElevatedButton(
-                    onPressed: applyEnabled.value && enabled && !locked
-                        ? () async {
-                            applyEnabled.value = false;
-                            await bind.mainSetOption(
-                                key: 'direct-access-port',
-                                value: controller.text);
-                          }
-                        : null,
-                    child: Text(
-                      translate('Apply'),
-                    ),
-                  ).marginOnly(left: 20))
-            ]),
+                Obx(() => ElevatedButton(
+                      onPressed: applyEnabled.value && enabled && !locked
+                          ? () async {
+                              applyEnabled.value = false;
+                              await bind.mainSetOption(
+                                  key: 'direct-access-port',
+                                  value: controller.text);
+                            }
+                          : null,
+                      child: Text(
+                        translate('Apply'),
+                      ),
+                    ))
+              ]),
+              enabled: enabled && !locked,
+            ),
           );
         },
       ),
@@ -1071,7 +1074,7 @@ class _NetworkState extends State<_Network> with AutomaticKeepAliveClientMixin {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [_Button('Apply', submit, enabled: enabled)],
-            ).marginOnly(top: 15),
+            ).marginOnly(top: 10),
           ],
         )
       ]);
@@ -1614,43 +1617,18 @@ Widget _SubButton(String label, Function() onPressed, [bool enabled = true]) {
 }
 
 // ignore: non_constant_identifier_names
-Widget _SubLabeledWidget(String label, Widget child, {bool enabled = true}) {
-  RxBool hover = false.obs;
+Widget _SubLabeledWidget(BuildContext context, String label, Widget child,
+    {bool enabled = true}) {
   return Row(
     children: [
-      MouseRegion(
-          onEnter: (_) => hover.value = true,
-          onExit: (_) => hover.value = false,
-          child: Obx(
-            () {
-              return Container(
-                  height: 32,
-                  decoration: BoxDecoration(
-                      border: Border.all(
-                          color: hover.value && enabled
-                              ? const Color(0xFFD7D7D7)
-                              : const Color(0xFFCBCBCB),
-                          width: hover.value && enabled ? 2 : 1)),
-                  child: Row(
-                    children: [
-                      Container(
-                        height: 28,
-                        color: (hover.value && enabled)
-                            ? const Color(0xFFD7D7D7)
-                            : const Color(0xFFCBCBCB),
-                        alignment: Alignment.center,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 5, vertical: 2),
-                        child: Text(
-                          '${translate(label)}: ',
-                          style: const TextStyle(fontWeight: FontWeight.w300),
-                        ),
-                      ).paddingAll(2),
-                      child,
-                    ],
-                  ));
-            },
-          )),
+      Text(
+        '${translate(label)}: ',
+        style: TextStyle(color: _disabledTextColor(context, enabled)),
+      ),
+      SizedBox(
+        width: 10,
+      ),
+      child,
     ],
   ).marginOnly(left: _kContentHSubMargin);
 }
@@ -1719,33 +1697,30 @@ _LabeledTextField(
     bool secure) {
   return Row(
     children: [
-      Spacer(flex: 1),
+      ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 140),
+          child: Text(
+            '${translate(label)}:',
+            textAlign: TextAlign.right,
+            style: TextStyle(
+                fontSize: 16, color: _disabledTextColor(context, enabled)),
+          ).marginOnly(right: 10)),
       Expanded(
-        flex: 4,
-        child: Text(
-          '${translate(label)}:',
-          textAlign: TextAlign.right,
-          style: TextStyle(color: _disabledTextColor(context, enabled)),
-        ),
-      ),
-      Spacer(flex: 1),
-      Expanded(
-        flex: 10,
         child: TextField(
             controller: controller,
             enabled: enabled,
             obscureText: secure,
             decoration: InputDecoration(
                 isDense: true,
-                contentPadding: EdgeInsets.symmetric(vertical: 15),
+                border: OutlineInputBorder(),
+                contentPadding: EdgeInsets.fromLTRB(14, 15, 14, 15),
                 errorText: errorText.isNotEmpty ? errorText : null),
             style: TextStyle(
               color: _disabledTextColor(context, enabled),
             )),
       ),
-      Spacer(flex: 1),
     ],
-  );
+  ).marginOnly(bottom: 8);
 }
 
 // ignore: must_be_immutable
@@ -1832,6 +1807,7 @@ void changeSocks5Proxy() async {
   var proxyController = TextEditingController(text: proxy);
   var userController = TextEditingController(text: username);
   var pwdController = TextEditingController(text: password);
+  RxBool obscure = true.obs;
 
   var isInProgress = false;
   gFFI.dialogManager.show((setState, close) {
@@ -1877,12 +1853,11 @@ void changeSocks5Proxy() async {
             Row(
               children: [
                 ConstrainedBox(
-                    constraints: const BoxConstraints(minWidth: 100),
-                    child: Text('${translate("Hostname")}:')
-                        .marginOnly(bottom: 16.0)),
-                const SizedBox(
-                  width: 24.0,
-                ),
+                    constraints: const BoxConstraints(minWidth: 140),
+                    child: Text(
+                      '${translate("Hostname")}:',
+                      textAlign: TextAlign.right,
+                    ).marginOnly(right: 10)),
                 Expanded(
                   child: TextField(
                     decoration: InputDecoration(
@@ -1893,19 +1868,15 @@ void changeSocks5Proxy() async {
                   ),
                 ),
               ],
-            ),
-            const SizedBox(
-              height: 8.0,
-            ),
+            ).marginOnly(bottom: 8),
             Row(
               children: [
                 ConstrainedBox(
-                    constraints: const BoxConstraints(minWidth: 100),
-                    child: Text('${translate("Username")}:')
-                        .marginOnly(bottom: 16.0)),
-                const SizedBox(
-                  width: 24.0,
-                ),
+                    constraints: const BoxConstraints(minWidth: 140),
+                    child: Text(
+                      '${translate("Username")}:',
+                      textAlign: TextAlign.right,
+                    ).marginOnly(right: 10)),
                 Expanded(
                   child: TextField(
                     decoration: const InputDecoration(
@@ -1915,32 +1886,30 @@ void changeSocks5Proxy() async {
                   ),
                 ),
               ],
-            ),
-            const SizedBox(
-              height: 8.0,
-            ),
+            ).marginOnly(bottom: 8),
             Row(
               children: [
                 ConstrainedBox(
-                    constraints: const BoxConstraints(minWidth: 100),
-                    child: Text('${translate("Password")}:')
-                        .marginOnly(bottom: 16.0)),
-                const SizedBox(
-                  width: 24.0,
-                ),
+                    constraints: const BoxConstraints(minWidth: 140),
+                    child: Text(
+                      '${translate("Password")}:',
+                      textAlign: TextAlign.right,
+                    ).marginOnly(right: 10)),
                 Expanded(
-                  child: TextField(
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                    ),
-                    controller: pwdController,
-                  ),
+                  child: Obx(() => TextField(
+                        obscureText: obscure.value,
+                        decoration: InputDecoration(
+                            border: const OutlineInputBorder(),
+                            suffixIcon: IconButton(
+                                onPressed: () => obscure.value = !obscure.value,
+                                icon: Icon(obscure.value
+                                    ? Icons.visibility_off
+                                    : Icons.visibility))),
+                        controller: pwdController,
+                      )),
                 ),
               ],
-            ),
-            const SizedBox(
-              height: 8.0,
-            ),
+            ).marginOnly(bottom: 8),
             Offstage(
                 offstage: !isInProgress, child: const LinearProgressIndicator())
           ],
