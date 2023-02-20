@@ -1826,7 +1826,7 @@ class _DraggableShowHideState extends State<_DraggableShowHide> {
                     alignment: Alignment.center,
                     child: const Icon(
                       Icons.personal_video,
-                      color: _MenubarTheme.commonColor,
+                      color: _MenubarTheme.blueColor,
                       size: 20.0,
                     ))),
             Container(
@@ -1834,8 +1834,7 @@ class _DraggableShowHideState extends State<_DraggableShowHide> {
                     alignment: Alignment(0.0, -0.4),
                     child: Text(
                       '  ${CurrentDisplayState.find(widget.id).value + 1}/${pi.displays.length}',
-                      style: const TextStyle(
-                          color: _MenubarTheme.commonColor, fontSize: 8),
+                      style: const TextStyle(color: Colors.white, fontSize: 8),
                     ))),
           ]),
         ),
