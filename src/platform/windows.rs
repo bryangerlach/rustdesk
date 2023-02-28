@@ -5,7 +5,9 @@ use crate::license::*;
 use hbb_common::{
     allow_err, bail,
     config::{self, Config},
-    log, sleep, timeout, tokio,
+    log,
+    message_proto::Resolution,
+    sleep, timeout, tokio,
 };
 use std::io::prelude::*;
 use std::{
@@ -1234,6 +1236,15 @@ pub fn uninstall_me() -> ResultType<()> {
 
 fn write_cmds(cmds: String, ext: &str, tip: &str) -> ResultType<std::path::PathBuf> {
     let mut tmp = std::env::temp_dir();
+    // When dir contains these characters, the bat file will not execute in elevated mode.
+    if vec!["&", "@", "^"]
+        .drain(..)
+        .any(|s| tmp.to_string_lossy().to_string().contains(s))
+    {
+        if let Ok(dir) = user_accessible_folder() {
+            tmp = dir;
+        }
+    }
     tmp.push(format!("{}_{}.{}", crate::get_app_name(), tip, ext));
     let mut file = std::fs::File::create(&tmp)?;
     // in case cmds mixed with \r\n and \n, make sure all ending with \r\n
@@ -1783,4 +1794,106 @@ pub fn set_path_permission(dir: &PathBuf, permission: &str) -> ResultType<()> {
         .arg("/T")
         .spawn()?;
     Ok(())
+}
+
+pub fn resolutions(name: &str) -> Vec<Resolution> {
+    unsafe {
+        let mut dm: DEVMODEW = std::mem::zeroed();
+        let wname = wide_string(name);
+        let len = if wname.len() <= dm.dmDeviceName.len() {
+            wname.len()
+        } else {
+            dm.dmDeviceName.len()
+        };
+        std::ptr::copy_nonoverlapping(wname.as_ptr(), dm.dmDeviceName.as_mut_ptr(), len);
+        dm.dmSize = std::mem::size_of::<DEVMODEW>() as _;
+        let mut v = vec![];
+        let mut num = 0;
+        loop {
+            if EnumDisplaySettingsW(NULL as _, num, &mut dm) == 0 {
+                break;
+            }
+            let r = Resolution {
+                width: dm.dmPelsWidth as _,
+                height: dm.dmPelsHeight as _,
+                ..Default::default()
+            };
+            if !v.contains(&r) {
+                v.push(r);
+            }
+            num += 1;
+        }
+        v
+    }
+}
+
+pub fn current_resolution(name: &str) -> ResultType<Resolution> {
+    unsafe {
+        let mut dm: DEVMODEW = std::mem::zeroed();
+        dm.dmSize = std::mem::size_of::<DEVMODEW>() as _;
+        let wname = wide_string(name);
+        if EnumDisplaySettingsW(wname.as_ptr(), ENUM_CURRENT_SETTINGS, &mut dm) == 0 {
+            bail!(
+                "failed to get currrent resolution, errno={}",
+                GetLastError()
+            );
+        }
+        let r = Resolution {
+            width: dm.dmPelsWidth as _,
+            height: dm.dmPelsHeight as _,
+            ..Default::default()
+        };
+        Ok(r)
+    }
+}
+
+pub fn change_resolution(name: &str, width: usize, height: usize) -> ResultType<()> {
+    unsafe {
+        let mut dm: DEVMODEW = std::mem::zeroed();
+        if FALSE == EnumDisplaySettingsW(NULL as _, ENUM_CURRENT_SETTINGS, &mut dm) {
+            bail!("EnumDisplaySettingsW failed, errno={}", GetLastError());
+        }
+        let wname = wide_string(name);
+        let len = if wname.len() <= dm.dmDeviceName.len() {
+            wname.len()
+        } else {
+            dm.dmDeviceName.len()
+        };
+        std::ptr::copy_nonoverlapping(wname.as_ptr(), dm.dmDeviceName.as_mut_ptr(), len);
+        dm.dmSize = std::mem::size_of::<DEVMODEW>() as _;
+        dm.dmPelsWidth = width as _;
+        dm.dmPelsHeight = height as _;
+        dm.dmFields = DM_PELSHEIGHT | DM_PELSWIDTH;
+        let res = ChangeDisplaySettingsExW(
+            wname.as_ptr(),
+            &mut dm,
+            NULL as _,
+            CDS_UPDATEREGISTRY | CDS_GLOBAL | CDS_RESET,
+            NULL,
+        );
+        if res != DISP_CHANGE_SUCCESSFUL {
+            bail!(
+                "ChangeDisplaySettingsExW failed, res={}, errno={}",
+                res,
+                GetLastError()
+            );
+        }
+        Ok(())
+    }
+}
+
+pub fn user_accessible_folder() -> ResultType<PathBuf> {
+    let disk = std::env::var("SystemDrive").unwrap_or("C:".to_string());
+    let dir1 = PathBuf::from(format!("{}\\ProgramData", disk));
+    // NOTICE: "C:\Windows\Temp" requires permanent authorization.
+    let dir2 = PathBuf::from(format!("{}\\Windows\\Temp", disk));
+    let dir;
+    if dir1.exists() {
+        dir = dir1;
+    } else if dir2.exists() {
+        dir = dir2;
+    } else {
+        bail!("no vaild user accessible folder");
+    }
+    Ok(dir)
 }

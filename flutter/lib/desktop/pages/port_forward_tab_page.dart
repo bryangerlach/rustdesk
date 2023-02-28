@@ -96,7 +96,7 @@ class _PortForwardTabPageState extends State<PortForwardTabPage> {
       decoration: BoxDecoration(
           border: Border.all(color: MyTheme.color(context).border!)),
       child: Scaffold(
-          backgroundColor: Theme.of(context).backgroundColor,
+          backgroundColor: Theme.of(context).colorScheme.background,
           body: DesktopTab(
             controller: tabController,
             onWindowCloseButton: () async {
@@ -107,13 +107,15 @@ class _PortForwardTabPageState extends State<PortForwardTabPage> {
             labelGetter: DesktopTab.labelGetterAlias,
           )),
     );
-    return Platform.isMacOS
+    return Platform.isMacOS || kUseCompatibleUiMode
         ? tabWidget
-        : SubWindowDragToResizeArea(
-            child: tabWidget,
-            resizeEdgeSize: stateGlobal.resizeEdgeSize.value,
-            windowId: stateGlobal.windowId,
-          );
+        : Obx(
+          () => SubWindowDragToResizeArea(
+              child: tabWidget,
+              resizeEdgeSize: stateGlobal.resizeEdgeSize.value,
+              windowId: stateGlobal.windowId,
+            ),
+        );
   }
 
   void onRemoveId(String id) {

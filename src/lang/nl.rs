@@ -444,7 +444,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Default View Style", "Standaard Weergave Stijl"),
         ("Default Scroll Style", "Standaard Scroll Stijl"),
         ("Default Image Quality", "Standaard Beeldkwaliteit"),
-        ("Default Codec", "tandaard Codec"),
+        ("Default Codec", "Standaard Codec"),
         ("Bitrate", "Bitrate"),
         ("FPS", "FPS"),
         ("Auto", "Auto"),
@@ -454,5 +454,8 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Stop voice call", "Stop spraakoproep"),
         ("relay_hint_tip", ""),
         ("Reconnect", ""),
+        ("Codec", ""),
+        ("Resolution", ""),
+        ("No transfers in progress", ""),
         ].iter().cloned().collect();
 }
