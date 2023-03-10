@@ -204,7 +204,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Warning", "Предупреждение"),
         ("Login screen using Wayland is not supported", "Вход в систему с использованием Wayland не поддерживается"),
         ("Reboot required", "Требуется перезагрузка"),
-        ("Unsupported display server ", "Неподдерживаемый сервер отображения"),
+        ("Unsupported display server", "Неподдерживаемый сервер отображения"),
         ("x11 expected", "Ожидается X11"),
         ("Port", "Порт"),
         ("Settings", "Настройки"),
@@ -349,7 +349,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Security", "Безопасность"),
         ("Theme", "Тема"),
         ("Dark Theme", "Тёмная тема"),
-        ("Light Theme", ""),
+        ("Light Theme", "Светлая тема"),
         ("Dark", "Тёмная"),
         ("Light", "Светлая"),
         ("Follow System", "Системная"),
@@ -460,6 +460,9 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Codec", "Кодек"),
         ("Resolution", "Разрешение"),
         ("No transfers in progress", "Передача не осуществляется"),
-        ("Set one-time password length", ""),
+        ("Set one-time password length", "Установить длину одноразового пароля"),
+        ("idd_driver_tip", "Установите драйвер виртуального дисплея, который используется при отсутствии физических дисплеев."),
+        ("confirm_idd_driver_tip", "Включена функция установки драйвера виртуального дисплея. Обратите внимание, что для доверия к драйверу будет установлен тестовый сертификат. Этот сертификат будет использоваться только для подтверждения доверия драйверам Rustdesk."),
+        ("RDP Settings", "Настройки RDP"),
     ].iter().cloned().collect();
 }

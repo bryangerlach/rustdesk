@@ -263,8 +263,11 @@ class ServerModel with ChangeNotifier {
   toggleInput() {
     if (_inputOk) {
       parent.target?.invokeMethod("stop_input");
+      bind.mainSetOption(key: "enable-keyboard", value: 'N');
     } else {
       if (parent.target != null) {
+        /// the result of toggle-on depends on user actions in the settings page.
+        /// handle result, see [ServerModel.changeStatue]
         showInputWarnAlert(parent.target!);
       }
     }
@@ -456,7 +459,8 @@ class ServerModel with ChangeNotifier {
     Future.delayed(Duration.zero, () async {
       if (!hideCm) window_on_top(null);
     });
-    if (client.authorized) {
+    // Only do the hidden task when on Desktop.
+    if (client.authorized && isDesktop) {
       cmHiddenTimer = Timer(const Duration(seconds: 3), () {
         if (!hideCm) windowManager.minimize();
         cmHiddenTimer = null;
