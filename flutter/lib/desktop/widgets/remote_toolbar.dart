@@ -2128,15 +2128,11 @@ class _DraggableShowHide extends StatefulWidget {
   final RxDouble fractionX;
   final RxBool dragging;
   final RxBool show;
-  final FFI ffi;
-  final String id;
   const _DraggableShowHide({
     Key? key,
     required this.fractionX,
     required this.dragging,
     required this.show,
-    required this.ffi,
-    required this.id,
   }) : super(key: key);
 
   @override
