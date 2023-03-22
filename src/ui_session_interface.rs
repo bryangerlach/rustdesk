@@ -10,11 +10,10 @@ use std::time::{Duration, SystemTime};
 
 use async_trait::async_trait;
 use bytes::Bytes;
-use hbb_common::message_proto::option_message::BoolOption;
 use rdev::{Event, EventType::*};
 use uuid::Uuid;
 
-use hbb_common::config::{Config, LocalConfig, PeerConfig, RS_PUB_KEY};
+use hbb_common::config::{Config, LocalConfig, PeerConfig};
 use hbb_common::rendezvous_proto::ConnType;
 use hbb_common::tokio::{self, sync::mpsc};
 use hbb_common::{allow_err, message_proto::*};
@@ -563,8 +562,8 @@ impl<T: InvokeUiSession> Session<T> {
         let event = Event {
             time: SystemTime::now(),
             unicode: None,
-            code: keycode as _,
-            scan_code: scancode as _,
+            platform_code: keycode as _,
+            position_code: scancode as _,
             event_type: event_type,
         };
         keyboard::client::process_event(&event, Some(lock_modes));
@@ -843,37 +842,6 @@ impl<T: InvokeUiSession> Session<T> {
         }
         false
     }
-
-    pub fn set_view_only(&self, view_only: bool) {
-        let mut option = OptionMessage::default();
-        let f = |b: bool| {
-            if b {
-                BoolOption::Yes.into()
-            } else {
-                BoolOption::No.into()
-            }
-        };
-        if view_only {
-            option.disable_keyboard = f(true);
-            option.disable_clipboard = f(true);
-            option.show_remote_cursor = f(true);
-        } else {
-            option.disable_keyboard = f(false);
-            option.disable_clipboard = f(self.get_toggle_option("disable-clipboard".to_string()));
-            option.show_remote_cursor = f(self.get_toggle_option("show-remote-cursor".to_string()));
-        }
-        let mut misc = Misc::new();
-        misc.set_option(option);
-        let mut msg = Message::new();
-        msg.set_misc(misc);
-        self.send(Data::Message(msg));
-        if self.get_toggle_option("view-only".to_string()) != view_only {
-            self.lc
-                .write()
-                .unwrap()
-                .toggle_option("view-only".to_string());
-        }
-    }
 }
 
 pub trait InvokeUiSession: Send + Sync + Clone + 'static + Sized + Default {
@@ -905,7 +873,14 @@ pub trait InvokeUiSession: Send + Sync + Clone + 'static + Sized + Default {
         only_count: bool,
     );
     fn confirm_delete_files(&self, id: i32, i: i32, name: String);
-    fn override_file_confirm(&self, id: i32, file_num: i32, to: String, is_upload: bool, is_identical: bool);
+    fn override_file_confirm(
+        &self,
+        id: i32,
+        file_num: i32,
+        to: String,
+        is_upload: bool,
+        is_identical: bool,
+    );
     fn update_block_input_state(&self, on: bool);
     fn job_progress(&self, id: i32, file_num: i32, speed: f64, finished_size: f64);
     fn adapt_size(&self);
@@ -1080,15 +1055,8 @@ impl<T: InvokeUiSession> Session<T> {
 pub async fn io_loop<T: InvokeUiSession>(handler: Session<T>) {
     let (sender, mut receiver) = mpsc::unbounded_channel::<Data>();
     *handler.sender.write().unwrap() = Some(sender.clone());
-    let mut options = crate::ipc::get_options_async().await;
-    let mut key = options.remove("key").unwrap_or("".to_owned());
     let token = LocalConfig::get_option("access_token");
-    if key.is_empty() {
-        key = crate::platform::get_license_key();
-    }
-    if key.is_empty() && !option_env!("RENDEZVOUS_SERVER").unwrap_or("").is_empty() {
-        key = RS_PUB_KEY.to_owned();
-    }
+    let key = crate::get_key(false).await;
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     if handler.is_port_forward() {
         if handler.is_rdp() {

@@ -87,6 +87,7 @@ pub fn session_add_sync(
     is_port_forward: bool,
     switch_uuid: String,
     force_relay: bool,
+    password: String,
 ) -> SyncReturn<String> {
     if let Err(e) = session_add(
         &id,
@@ -94,6 +95,7 @@ pub fn session_add_sync(
         is_port_forward,
         &switch_uuid,
         force_relay,
+        password,
     ) {
         SyncReturn(format!("Failed to add session with id {}, {}", &id, e))
     } else {
@@ -540,12 +542,6 @@ pub fn session_set_size(_id: String, _width: i32, _height: i32) {
     #[cfg(feature = "flutter_texture_render")]
     if let Some(session) = SESSIONS.write().unwrap().get_mut(&_id) {
         session.set_size(_width, _height);
-    }
-}
-
-pub fn session_set_view_only(id: String, view_only: bool) {
-    if let Some(session) = SESSIONS.read().unwrap().get(&id) {
-        session.set_view_only(view_only);
     }
 }
 

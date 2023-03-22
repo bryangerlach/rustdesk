@@ -1,12 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi' hide Size;
 import 'dart:io';
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
-import 'package:ffi/ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hbb/consts.dart';
@@ -402,10 +399,12 @@ class FfiModel with ChangeNotifier {
       //
     }
 
+    final connType = parent.target?.connType;
+
     if (isPeerAndroid) {
       _touchMode = true;
-      if (parent.target != null &&
-          parent.target!.connType == ConnType.defaultConn &&
+      if (connType == ConnType.defaultConn &&
+          parent.target != null &&
           parent.target!.ffiModel.permissions['keyboard'] != false) {
         Timer(
             const Duration(milliseconds: 100),
@@ -417,10 +416,9 @@ class FfiModel with ChangeNotifier {
           await bind.sessionGetOption(id: peerId, arg: 'touch-mode') != '';
     }
 
-    if (parent.target != null &&
-        parent.target!.connType == ConnType.fileTransfer) {
+    if (connType == ConnType.fileTransfer) {
       parent.target?.fileModel.onReady();
-    } else {
+    } else if (connType == ConnType.defaultConn) {
       _pi.displays = [];
       List<dynamic> displays = json.decode(evt['displays']);
       for (int i = 0; i < displays.length; ++i) {
@@ -449,6 +447,20 @@ class FfiModel with ChangeNotifier {
       _pi.features.privacyMode = features['privacy_mode'] == 1;
       handleResolutions(peerId, evt["resolutions"]);
       parent.target?.elevationModel.onPeerInfo(_pi);
+    }
+    if (connType == ConnType.defaultConn) {
+      setViewOnly(peerId,
+          bind.sessionGetToggleOptionSync(id: peerId, arg: 'view-only'));
+    }
+    if (connType == ConnType.defaultConn) {
+      final platform_additions = evt['platform_additions'];
+      if (platform_additions != null && platform_additions != '') {
+        try {
+          _pi.platform_additions = json.decode(platform_additions);
+        } catch (e) {
+          debugPrint('Failed to decode platform_additions $e');
+        }
+      }
     }
     notifyListeners();
   }
@@ -522,6 +534,7 @@ class FfiModel with ChangeNotifier {
   }
 
   void setViewOnly(String id, bool value) {
+    if (version_cmp(_pi.version, '1.2.0') < 0) return;
     if (value) {
       ShowRemoteCursorState.find(id).value = value;
     } else {
@@ -1528,6 +1541,7 @@ class FFI {
       {bool isFileTransfer = false,
       bool isPortForward = false,
       String? switchUuid,
+      String? password,
       bool? forceRelay}) {
     assert(!(isFileTransfer && isPortForward), 'more than one connect type');
     if (isFileTransfer) {
@@ -1544,11 +1558,13 @@ class FFI {
     }
     // ignore: unused_local_variable
     final addRes = bind.sessionAddSync(
-        id: id,
-        isFileTransfer: isFileTransfer,
-        isPortForward: isPortForward,
-        switchUuid: switchUuid ?? "",
-        forceRelay: forceRelay ?? false);
+      id: id,
+      isFileTransfer: isFileTransfer,
+      isPortForward: isPortForward,
+      switchUuid: switchUuid ?? "",
+      forceRelay: forceRelay ?? false,
+      password: password ?? "",
+    );
     final stream = bind.sessionStart(id: id);
     final cb = ffiModel.startEventListener(id);
     () async {
@@ -1681,6 +1697,9 @@ class PeerInfo {
   List<Display> displays = [];
   Features features = Features();
   List<Resolution> resolutions = [];
+  Map<String, dynamic> platform_additions = {};
+
+  bool get is_wayland => platform_additions['is_wayland'] == true;
 }
 
 const canvasKey = 'canvas';

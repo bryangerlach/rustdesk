@@ -25,19 +25,20 @@ import '../../utils/image.dart';
 import '../widgets/remote_toolbar.dart';
 import '../widgets/kb_layout_type_chooser.dart';
 
-bool _isCustomCursorInited = false;
 final SimpleWrapper<bool> _firstEnterImage = SimpleWrapper(false);
 
 class RemotePage extends StatefulWidget {
   RemotePage({
     Key? key,
     required this.id,
+    required this.password,
     required this.menubarState,
     this.switchUuid,
     this.forceRelay,
   }) : super(key: key);
 
   final String id;
+  final String? password;
   final MenubarState menubarState;
   final String? switchUuid;
   final bool? forceRelay;
@@ -113,6 +114,7 @@ class _RemotePageState extends State<RemotePage>
     });
     _ffi.start(
       widget.id,
+      password: widget.password,
       switchUuid: widget.switchUuid,
       forceRelay: widget.forceRelay,
     );
@@ -139,9 +141,8 @@ class _RemotePageState extends State<RemotePage>
     _ffi.ffiModel.updateEventListener(widget.id);
     _ffi.qualityMonitorModel.checkShowQualityMonitor(widget.id);
     // Session option should be set after models.dart/FFI.start
-    // _showRemoteCursor has been set by setViewOnly
-    _ffi.ffiModel.setViewOnly(widget.id,
-        bind.sessionGetToggleOptionSync(id: widget.id, arg: 'view-only'));
+    _showRemoteCursor.value = bind.sessionGetToggleOptionSync(
+        id: widget.id, arg: 'show-remote-cursor');
     _zoomCursor.value =
         bind.sessionGetToggleOptionSync(id: widget.id, arg: 'zoom-cursor');
     DesktopMultiWindow.addListener(this);
