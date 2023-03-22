@@ -2187,8 +2187,6 @@ class _DraggableShowHideState extends State<_DraggableShowHide> {
 
   @override
   Widget build(BuildContext context) {
-    final pi = widget.ffi.ffiModel.pi;
-    final numMonitors = pi.displays.length;
     final ButtonStyle buttonStyle = ButtonStyle(
       minimumSize: MaterialStateProperty.all(const Size(0, 0)),
       padding: MaterialStateProperty.all(EdgeInsets.zero),
@@ -2197,34 +2195,6 @@ class _DraggableShowHideState extends State<_DraggableShowHide> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildDraggable(context),
-        TextButton(
-          onPressed: () {
-            RxInt display = CurrentDisplayState.find(widget.id);
-            display.value = display.value + 1;
-            if (display.value >= numMonitors) {
-              display.value = 0;
-            }
-            bind.sessionSwitchDisplay(id: widget.id, value: display.value);
-            pi.currentDisplay = display.value;
-          },
-          child: Stack(children: [
-            Container(
-                child: Align(
-                    alignment: Alignment.center,
-                    child: const Icon(
-                      Icons.personal_video,
-                      color: _MenubarTheme.blueColor,
-                      size: 20.0,
-                    ))),
-            Container(
-                child: Align(
-                    alignment: Alignment(0.0, -0.4),
-                    child: Text(
-                      '  ${CurrentDisplayState.find(widget.id).value + 1}/${pi.displays.length}',
-                      style: const TextStyle(color: Colors.white, fontSize: 8),
-                    ))),
-          ]),
-        ),
         TextButton(
           onPressed: () => setState(() {
             widget.show.value = !widget.show.value;
