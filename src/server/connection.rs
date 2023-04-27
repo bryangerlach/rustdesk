@@ -563,6 +563,12 @@ impl Connection {
         } else if video_privacy_conn_id == 0 {
             let _ = privacy_mode::turn_off_privacy(0);
         }
+        #[cfg(all(feature = "flutter", feature = "plugin_framework"))]
+        #[cfg(not(any(target_os = "android", target_os = "ios")))]
+        crate::plugin::handle_listen_event(
+            crate::plugin::EVENT_ON_CONN_CLOSE_SERVER.to_owned(),
+            conn.lr.my_id.clone(),
+        );
         video_service::notify_video_frame_fetched(id, None);
         scrap::codec::Encoder::update(id, scrap::codec::EncodingUpdate::Remove);
         video_service::VIDEO_QOS.lock().unwrap().reset();
@@ -1813,11 +1819,9 @@ impl Connection {
                     #[cfg(all(feature = "flutter", feature = "plugin_framework"))]
                     #[cfg(not(any(target_os = "android", target_os = "ios")))]
                     Some(misc::Union::PluginRequest(p)) => {
-                        if let Some(msg) =
-                            crate::plugin::handle_client_event(&p.id, &self.lr.my_id, &p.content)
-                        {
-                            self.send(msg).await;
-                        }
+                        let msg =
+                            crate::plugin::handle_client_event(&p.id, &self.lr.my_id, &p.content);
+                        self.send(msg).await;
                     }
                     _ => {}
                 },
