@@ -88,11 +88,8 @@ impl<T: InvokeUiSession> Session<T> {
     }
 
     pub fn is_port_forward(&self) -> bool {
-        self.lc
-            .read()
-            .unwrap()
-            .conn_type
-            .eq(&ConnType::PORT_FORWARD)
+        let conn_type = self.lc.read().unwrap().conn_type;
+        conn_type == ConnType::PORT_FORWARD || conn_type == ConnType::RDP
     }
 
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
@@ -228,16 +225,18 @@ impl<T: InvokeUiSession> Session<T> {
         true
     }
 
-    pub fn alternative_codecs(&self) -> (bool, bool, bool) {
+    pub fn alternative_codecs(&self) -> (bool, bool, bool, bool) {
         let decoder = scrap::codec::Decoder::supported_decodings(None);
         let mut vp8 = decoder.ability_vp8 > 0;
+        let mut av1 = decoder.ability_av1 > 0;
         let mut h264 = decoder.ability_h264 > 0;
         let mut h265 = decoder.ability_h265 > 0;
         let enc = &self.lc.read().unwrap().supported_encoding;
         vp8 = vp8 && enc.vp8;
+        av1 = av1 && enc.av1;
         h264 = h264 && enc.h264;
         h265 = h265 && enc.h265;
-        (vp8, h264, h265)
+        (vp8, av1, h264, h265)
     }
 
     pub fn change_prefer_codec(&self) {
@@ -832,6 +831,11 @@ impl<T: InvokeUiSession> Session<T> {
         }
     }
 
+    #[inline]
+    pub fn set_custom_resolution(&mut self, wh: Option<(i32, i32)>) {
+        self.lc.write().unwrap().set_custom_resolution(wh);
+    }
+
     pub fn change_resolution(&self, width: i32, height: i32) {
         let mut misc = Misc::new();
         misc.set_change_resolution(Resolution {
@@ -926,7 +930,7 @@ pub trait InvokeUiSession: Send + Sync + Clone + 'static + Sized + Default {
     fn update_block_input_state(&self, on: bool);
     fn job_progress(&self, id: i32, file_num: i32, speed: f64, finished_size: f64);
     fn adapt_size(&self);
-    fn on_rgba(&self, data: &mut Vec<u8>);
+    fn on_rgba(&self, rgba: &mut scrap::ImageRgb);
     fn msgbox(&self, msgtype: &str, title: &str, text: &str, link: &str, retry: bool);
     #[cfg(any(target_os = "android", target_os = "ios"))]
     fn clipboard(&self, content: String);
@@ -1207,7 +1211,7 @@ pub async fn io_loop<T: InvokeUiSession>(handler: Session<T>) {
     let frame_count_cl = frame_count.clone();
     let ui_handler = handler.ui_handler.clone();
     let (video_sender, audio_sender, video_queue, decode_fps) =
-        start_video_audio_threads(move |data: &mut Vec<u8>| {
+        start_video_audio_threads(move |data: &mut scrap::ImageRgb| {
             frame_count_cl.fetch_add(1, Ordering::Relaxed);
             ui_handler.on_rgba(data);
         });
