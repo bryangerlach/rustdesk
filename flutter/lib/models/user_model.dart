@@ -10,6 +10,8 @@ import '../common.dart';
 import 'model.dart';
 import 'platform_model.dart';
 
+bool refreshingUser = false;
+
 class UserModel {
   final RxString userName = ''.obs;
   final RxBool isAdmin = false.obs;
@@ -29,13 +31,16 @@ class UserModel {
       'id': await bind.mainGetMyId(),
       'uuid': await bind.mainGetUuid()
     };
+    if (refreshingUser) return;
     try {
+      refreshingUser = true;
       final response = await http.post(Uri.parse('$url/api/currentUser'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token'
           },
           body: json.encode(body));
+      refreshingUser = false;
       final status = response.statusCode;
       if (status == 401 || status == 400) {
         reset();
@@ -52,6 +57,7 @@ class UserModel {
     } catch (e) {
       debugPrint('Failed to refreshCurrentUser: $e');
     } finally {
+      refreshingUser = false;
       await updateOtherModels();
     }
   }
@@ -64,7 +70,7 @@ class UserModel {
     try {
       return json.decode(userInfo);
     } catch (e) {
-      debugPrint('Failed to get local user info, json decode "$userInfo": $e');
+      debugPrint('Failed to get local user info "$userInfo": $e');
     }
     return null;
   }
@@ -133,6 +139,9 @@ class UserModel {
     if (resp.statusCode != 200) {
       throw RequestException(resp.statusCode, body['error'] ?? '');
     }
+    if (body['error'] != null) {
+      throw RequestException(0, body['error']);
+    }
 
     return getLoginResponseFromAuthBody(body);
   }
@@ -156,6 +165,7 @@ class UserModel {
   static Future<List<dynamic>> queryLoginOptions() async {
     try {
       final url = await bind.mainGetApiServer();
+      if (url.trim().isEmpty) return [];
       final resp = await http.get(Uri.parse('$url/api/login-options'));
       return jsonDecode(resp.body);
     } catch (e) {

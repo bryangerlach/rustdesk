@@ -21,7 +21,6 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:get/get.dart';
 import 'package:texture_rgba_renderer/texture_rgba_renderer.dart';
 import 'package:uni_links/uni_links.dart';
-import 'package:uni_links_desktop/uni_links_desktop.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:uuid/uuid.dart';
 import 'package:win32/win32.dart' as win32;
@@ -289,8 +288,8 @@ class MyTheme {
     tabBarTheme: const TabBarTheme(
       labelColor: Colors.black87,
     ),
-    splashColor: Colors.transparent,
-    highlightColor: Colors.transparent,
+    splashColor: isDesktop ? Colors.transparent : null,
+    highlightColor: isDesktop ? Colors.transparent : null,
     splashFactory: isDesktop ? NoSplash.splashFactory : null,
     textButtonTheme: isDesktop
         ? TextButtonThemeData(
@@ -378,8 +377,8 @@ class MyTheme {
     scrollbarTheme: ScrollbarThemeData(
       thumbColor: MaterialStateProperty.all(Colors.grey[500]),
     ),
-    splashColor: Colors.transparent,
-    highlightColor: Colors.transparent,
+    splashColor: isDesktop ? Colors.transparent : null,
+    highlightColor: isDesktop ? Colors.transparent : null,
     splashFactory: isDesktop ? NoSplash.splashFactory : null,
     textButtonTheme: isDesktop
         ? TextButtonThemeData(
@@ -829,6 +828,7 @@ class CustomAlertDialog extends StatelessWidget {
   const CustomAlertDialog(
       {Key? key,
       this.title,
+      this.titlePadding,
       required this.content,
       this.actions,
       this.contentPadding,
@@ -838,6 +838,7 @@ class CustomAlertDialog extends StatelessWidget {
       : super(key: key);
 
   final Widget? title;
+  final EdgeInsetsGeometry? titlePadding;
   final Widget content;
   final List<Widget>? actions;
   final double? contentPadding;
@@ -886,7 +887,7 @@ class CustomAlertDialog extends StatelessWidget {
             child: content,
           ),
           actions: actions,
-          titlePadding: MyTheme.dialogTitlePadding(content: content != null),
+          titlePadding: titlePadding ?? MyTheme.dialogTitlePadding(),
           contentPadding:
               MyTheme.dialogContentPadding(actions: actions is List),
           actionsPadding: MyTheme.dialogActionsPadding(),
@@ -999,6 +1000,26 @@ Widget msgboxIcon(String type) {
 
 // title should be null
 Widget msgboxContent(String type, String title, String text) {
+  String translateText(String text) {
+    if (text.indexOf('Failed') == 0 && text.indexOf(': ') > 0) {
+      List<String> words = text.split(': ');
+      for (var i = 0; i < words.length; ++i) {
+        words[i] = translate(words[i]);
+      }
+      text = words.join(': ');
+    } else {
+      List<String> words = text.split(' ');
+      if (words.length > 1 && words[0].endsWith('_tip')) {
+        words[0] = translate(words[0]);
+        final rest = text.substring(words[0].length + 1);
+        text = '${words[0]} ${translate(rest)}';
+      } else {
+        text = translate(text);
+      }
+    }
+    return text;
+  }
+
   return Row(
     children: [
       msgboxIcon(type),
@@ -1010,7 +1031,7 @@ Widget msgboxContent(String type, String title, String text) {
               translate(title),
               style: TextStyle(fontSize: 21),
             ).marginOnly(bottom: 10),
-            Text(translate(text), style: const TextStyle(fontSize: 15)),
+            Text(translateText(text), style: const TextStyle(fontSize: 15)),
           ],
         ),
       ),
@@ -1264,6 +1285,9 @@ Future<bool> matchPeer(String searchText, Peer peer) async {
 
 /// Get the image for the current [platform].
 Widget getPlatformImage(String platform, {double size = 50}) {
+  if (platform.isEmpty) {
+    return Container(width: size, height: size);
+  }
   if (platform == kPeerPlatformMacOS) {
     platform = 'mac';
   } else if (platform != kPeerPlatformLinux &&
@@ -1442,6 +1466,11 @@ Future<Offset?> _adjustRestoreMainWindowOffset(
 /// Restore window position and size on start
 /// Note that windowId must be provided if it's subwindow
 Future<bool> restoreWindowPosition(WindowType type, {int? windowId}) async {
+  if (bind
+      .mainGetEnv(key: "DISABLE_RUSTDESK_RESTORE_WINDOW_POSITION")
+      .isNotEmpty) {
+    return false;
+  }
   if (type != WindowType.Main && windowId == null) {
     debugPrint(
         "Error: windowId cannot be null when saving positions for sub window");
