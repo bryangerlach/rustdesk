@@ -233,6 +233,7 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Username missed", "Gebruikersnaam gemist"),
         ("Password missed", "Wachtwoord vergeten"),
         ("Wrong credentials", "Verkeerde inloggegevens"),
+        ("The verification code is incorrect or has expired", ""),
         ("Edit Tag", "Label Bewerken"),
         ("Unremember Password", "Wachtwoord vergeten"),
         ("Favorites", "Favorieten"),
@@ -512,5 +513,9 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Accept and Elevate", "Accepteren en Verheffen"),
         ("accept_and_elevate_btn_tooltip", "Accepteer de verbinding en verhoog de UAC-machtigingen."),
         ("clipboard_wait_response_timeout_tip", ""),
+        ("Incoming connection", ""),
+        ("Outgoing connection", ""),
+        ("Exit", ""),
+        ("Open", ""),
     ].iter().cloned().collect();
 }

@@ -6,6 +6,9 @@ on:
       upload-artifact:
         type: boolean
         default: true
+      upload-tag:
+        type: string
+        default: "nightly"
 
 env:
   CARGO_NDK_VERSION: "3.1.2"
@@ -15,11 +18,11 @@ env:
   # for arm64 linux
   FLUTTER_ELINUX_VERSION: "3.10.5"
   FLUTTER_ELINUX_COMMIT_ID: "410b3ca42f2cd0c485edf517a1666652bab442d4"
-  TAG_NAME: "nightly"
+  TAG_NAME: "${{ inputs.upload-tag }}"
   # vcpkg version: 2023.04.15
   # for multiarch gcc compatibility
   VCPKG_COMMIT_ID: "501db0f17ef6df184fcdbfbe0f87cde2313b6ab1"
-  VERSION: "1.2.0"
+  VERSION: "1.2.1"
   NDK_VERSION: "r25c"
   #signing keys env variable checks
   ANDROID_SIGNING_KEY: '${{ secrets.ANDROID_SIGNING_KEY }}'
@@ -374,6 +377,7 @@ jobs:
     uses: ./.github/workflows/bridge.yml
 
   build-rustdesk-ios:
+    if: ${{ inputs.upload-artifact == 'true' }}
     needs: [generate-bridge-linux]
     name: build rustdesk ios ipa ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
     runs-on: ${{ matrix.job.os }}
@@ -476,6 +480,7 @@ jobs:
               extra-build-features: "",
               openssl-arch: android-arm
             }
+    if: ${{ matrix.job.arch == 'armv7' || inputs.upload-artifact == 'true' }}
     steps:
       - name: Install dependencies
         run: |
@@ -778,49 +783,50 @@ jobs:
           name: librustdesk-${{ matrix.job.arch }}-${{ matrix.job.extra-build-features }}.so
           path: target/release/liblibrustdesk.so
 
-  # build-rustdesk-lib-linux-arm:
-  #   needs: [generate-bridge-linux, build-vcpkg-deps-linux]
-  #   name: build-rust-lib ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
-  #   runs-on: ${{ matrix.job.os }}
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       # use a high level qemu-user-static
-  #       job:
-  #         - {
-  #             arch: aarch64,
-  #             target: aarch64-unknown-linux-gnu,
-  #             os: ubuntu-20.04, # just for naming package, not running host
-  #             use-cross: true,
-  #             extra-build-features: "",
-  #             enable-headless: true
-  #           }
-  #         - {
-  #             arch: aarch64,
-  #             target: aarch64-unknown-linux-gnu,
-  #             os: ubuntu-20.04, # just for naming package, not running host
-  #             use-cross: true,
-  #             extra-build-features: "appimage",
-  #             enable-headless: false
-  #           }
-  #         # - { arch: aarch64, target: aarch64-unknown-linux-gnu   , os: ubuntu-20.04, use-cross: true, extra-build-features: "flatpak" }
-  #         # - {
-  #         #     arch: armv7,
-  #         #     target: armv7-unknown-linux-gnueabihf,
-  #         #     os: ubuntu-20.04,
-  #         #     use-cross: true,
-  #         #     extra-build-features: "",
-  #         #   }
-  #         # - { arch: armv7, target: armv7-unknown-linux-gnueabihf , os: ubuntu-20.04, use-cross: true, extra-build-features: "appimage" }
-  #         # - { target: arm-unknown-linux-musleabihf, os: ubuntu-20.04, use-cross: true }
-  #   steps:
-  #     - name: Maximize build space
-  #       run: |
-  #         sudo rm -rf /opt/ghc
-  #         sudo rm -rf /usr/local/lib/android
-  #         sudo rm -rf /usr/share/dotnet
-  #         sudo apt update -y
-  #         sudo apt install qemu-user-static
+  build-rustdesk-lib-linux-arm:
+    if: ${{ inputs.upload-artifact == 'true' }}
+    needs: [generate-bridge-linux, build-vcpkg-deps-linux]
+    name: build-rust-lib ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
+    runs-on: ${{ matrix.job.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # use a high level qemu-user-static
+        job:
+          - {
+              arch: aarch64,
+              target: aarch64-unknown-linux-gnu,
+              os: ubuntu-20.04, # just for naming package, not running host
+              use-cross: true,
+              extra-build-features: "",
+              enable-headless: true
+            }
+          - {
+              arch: aarch64,
+              target: aarch64-unknown-linux-gnu,
+              os: ubuntu-20.04, # just for naming package, not running host
+              use-cross: true,
+              extra-build-features: "appimage",
+              enable-headless: false
+            }
+          # - { arch: aarch64, target: aarch64-unknown-linux-gnu   , os: ubuntu-20.04, use-cross: true, extra-build-features: "flatpak" }
+          # - {
+          #     arch: armv7,
+          #     target: armv7-unknown-linux-gnueabihf,
+          #     os: ubuntu-20.04,
+          #     use-cross: true,
+          #     extra-build-features: "",
+          #   }
+          # - { arch: armv7, target: armv7-unknown-linux-gnueabihf , os: ubuntu-20.04, use-cross: true, extra-build-features: "appimage" }
+          # - { target: arm-unknown-linux-musleabihf, os: ubuntu-20.04, use-cross: true }
+    steps:
+      - name: Maximize build space
+        run: |
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo apt update -y
+          sudo apt install qemu-user-static
 
   #     - name: Checkout source code
   #       uses: actions/checkout@v3
@@ -940,27 +946,28 @@ jobs:
   #         name: librustdesk-${{ matrix.job.arch }}-${{ matrix.job.extra-build-features }}.so
   #         path: target/release/liblibrustdesk.so
 
-  # build-rustdesk-sciter-arm:
-  #   needs: [build-vcpkg-deps-linux]
-  #   name: build-rustdesk(sciter) ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
-  #   runs-on: ${{ matrix.job.os }}
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       # use a high level qemu-user-static
-  #       job:
-  #         - {
-  #             arch: armv7,
-  #             target: armv7-unknown-linux-gnueabihf,
-  #             deb-arch: armhf,
-  #             os: ubuntu-latest,
-  #             use-cross: true,
-  #             extra-build-features: "",
-  #             enable-headless: true
-  #           }
-  #         # - { arch: armv7, target: armv7-unknown-linux-gnueabihf , os: ubuntu-20.04, use-cross: true, extra-build-features: "appimage" }
-  #         # - { target: arm-unknown-linux-musleabihf, os: ubuntu-20.04, use-cross: true }
-  #   steps:
+  build-rustdesk-sciter-arm:
+    if: ${{ inputs.upload-artifact == 'true' }}
+    needs: [build-vcpkg-deps-linux]
+    name: build-rustdesk(sciter) ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
+    runs-on: ${{ matrix.job.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # use a high level qemu-user-static
+        job:
+          - {
+              arch: armv7,
+              target: armv7-unknown-linux-gnueabihf,
+              deb-arch: armhf,
+              os: ubuntu-latest,
+              use-cross: true,
+              extra-build-features: "",
+              enable-headless: true
+            }
+          # - { arch: armv7, target: armv7-unknown-linux-gnueabihf , os: ubuntu-20.04, use-cross: true, extra-build-features: "appimage" }
+          # - { target: arm-unknown-linux-musleabihf, os: ubuntu-20.04, use-cross: true }
+    steps:
 
   #     - name: Maximize build space
   #       run: |
@@ -1098,41 +1105,42 @@ jobs:
   #         name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
   #         path: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
 
-  # build-rustdesk-linux-arm:
-  #   needs: [build-rustdesk-lib-linux-arm]
-  #   name: build-rustdesk ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
-  #   runs-on: ubuntu-20.04 # 20.04 has more performance on arm build
-  #   strategy:
-  #     fail-fast: false
-  #     matrix:
-  #       job:
-  #         - {
-  #             arch: aarch64,
-  #             target: aarch64-unknown-linux-gnu,
-  #             os: ubuntu-18.04, # just for naming package, not running host
-  #             use-cross: true,
-  #             extra-build-features: "",
-  #           }
-  #         - {
-  #             arch: aarch64,
-  #             target: aarch64-unknown-linux-gnu,
-  #             os: ubuntu-18.04, # just for naming package, not running host
-  #             use-cross: true,
-  #             extra-build-features: "appimage",
-  #           }
-  #         # - {
-  #         #     arch: aarch64,
-  #         #     target: aarch64-unknown-linux-gnu,
-  #         #     os: ubuntu-18.04, # just for naming package, not running host
-  #         #     use-cross: true,
-  #         #     extra-build-features: "flatpak",
-  #         #   }
-  #         # - { arch: armv7, target: armv7-unknown-linux-gnueabihf , os: ubuntu-20.04, use-cross: true, extra-build-features: "" }
-  #         # - { arch: armv7, target: armv7-unknown-linux-gnueabihf , os: ubuntu-20.04, use-cross: true, extra-build-features: "appimage" }
-  #         # - { target: arm-unknown-linux-musleabihf, os: ubuntu-20.04, use-cross: true }
-  #   steps:
-  #     - name: Checkout source code
-  #       uses: actions/checkout@v3
+  build-rustdesk-linux-arm:
+    if: ${{ inputs.upload-artifact == 'true' }}
+    needs: [build-rustdesk-lib-linux-arm]
+    name: build-rustdesk ${{ matrix.job.target }} (${{ matrix.job.os }}) [${{ matrix.job.extra-build-features }}]
+    runs-on: ubuntu-20.04 # 20.04 has more performance on arm build
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - {
+              arch: aarch64,
+              target: aarch64-unknown-linux-gnu,
+              os: ubuntu-18.04, # just for naming package, not running host
+              use-cross: true,
+              extra-build-features: "",
+            }
+          - {
+              arch: aarch64,
+              target: aarch64-unknown-linux-gnu,
+              os: ubuntu-18.04, # just for naming package, not running host
+              use-cross: true,
+              extra-build-features: "appimage",
+            }
+          # - {
+          #     arch: aarch64,
+          #     target: aarch64-unknown-linux-gnu,
+          #     os: ubuntu-18.04, # just for naming package, not running host
+          #     use-cross: true,
+          #     extra-build-features: "flatpak",
+          #   }
+          # - { arch: armv7, target: armv7-unknown-linux-gnueabihf , os: ubuntu-20.04, use-cross: true, extra-build-features: "" }
+          # - { arch: armv7, target: armv7-unknown-linux-gnueabihf , os: ubuntu-20.04, use-cross: true, extra-build-features: "appimage" }
+          # - { target: arm-unknown-linux-musleabihf, os: ubuntu-20.04, use-cross: true }
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
 
   #     - name: Restore bridge files
   #       uses: actions/download-artifact@master
