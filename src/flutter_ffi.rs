@@ -606,8 +606,21 @@ pub fn main_get_option(key: String) -> String {
     get_option(key)
 }
 
+pub fn main_get_option_sync(key: String) -> SyncReturn<String> {
+    SyncReturn(get_option(key))
+}
+
 pub fn main_get_error() -> String {
     get_error()
+}
+
+pub fn main_show_option(_key: String) -> SyncReturn<bool> {
+    #[cfg(all(target_os = "linux", feature = "linux_headless"))]
+    #[cfg(not(any(feature = "flatpak", feature = "appimage")))]
+    if _key.eq(config::CONFIG_OPTION_ALLOW_LINUX_HEADLESS) {
+        return SyncReturn(true)
+    }
+    SyncReturn(false)
 }
 
 pub fn main_set_option(key: String, value: String) {
@@ -624,6 +637,10 @@ pub fn main_set_option(key: String, value: String) {
 
 pub fn main_get_options() -> String {
     get_options()
+}
+
+pub fn main_get_options_sync() -> SyncReturn<String> {
+    SyncReturn(get_options())
 }
 
 pub fn main_set_options(json: String) {

@@ -517,6 +517,12 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Outgoing connection", "Uitgaande verbinding"),
         ("Exit", "Verlaten"),
         ("Open", "Open"),
-        ("logout_tip", ""),
+        ("logout_tip", "Weet je zeker dat je je wilt afmelden?"),
+        ("Service", "Service"),
+        ("Start", "Start"),
+        ("Stop", "Stop"),
+        ("exceed_max_devices", "Het maximum aantal gecontroleerde apparaten is bereikt."),
+        ("Sync with recent sessions", "Recente sessies synchroniseren"),
+        ("Sort tags", "Labels sorteren"),
     ].iter().cloned().collect();
 }

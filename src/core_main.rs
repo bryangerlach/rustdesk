@@ -18,6 +18,14 @@ macro_rules! my_println{
     };
 }
 
+#[inline]
+fn is_empty_uni_link(arg: &str) -> bool {
+    if !arg.starts_with("rustdesk://") {
+        return false;
+    }
+    arg["rustdesk://".len()..].chars().all(|c| c == '/')
+}
+
 /// shared by flutter and sciter main function
 ///
 /// [Note]
@@ -77,12 +85,16 @@ pub fn core_main() -> Option<Vec<String>> {
     #[cfg(target_os = "linux")]
     #[cfg(feature = "flutter")]
     {
-        let (k, v) = ("LIBGL_ALWAYS_SOFTWARE", "true");
+        let (k, v) = ("LIBGL_ALWAYS_SOFTWARE", "1");
         if !hbb_common::config::Config::get_option("allow-always-software-render").is_empty() {
             std::env::set_var(k, v);
         } else {
             std::env::remove_var(k);
         }
+    }
+    #[cfg(windows)]
+    if args.contains(&"--connect".to_string()) {
+        hbb_common::platform::windows::start_cpu_performance_monitor();
     }
     #[cfg(feature = "flutter")]
     if _is_flutter_invoke_new_connection {
@@ -97,7 +109,6 @@ pub fn core_main() -> Option<Vec<String>> {
         args.clear();
     }
     if args.len() > 0 && args[0] == "--version" {
-        // not use my_println here, because check super use using this command, no dialog expected
         println!("{}", crate::VERSION);
         return None;
     }
@@ -144,9 +155,8 @@ pub fn core_main() -> Option<Vec<String>> {
     #[cfg(all(feature = "flutter", feature = "plugin_framework"))]
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     init_plugins(&args);
-    if args.is_empty() {
-        #[cfg(windows)]
-        clipboard::ContextSend::enable(true);
+    log::info!("main start args:{:?}", args);
+    if args.is_empty() || is_empty_uni_link(&args[0]) {
         std::thread::spawn(move || crate::start_server(false));
     } else {
         #[cfg(windows)]
@@ -204,6 +214,13 @@ pub fn core_main() -> Option<Vec<String>> {
                 crate::tray::start_tray();
             }
             return None;
+        } else if args[0] == "--install-service" {
+            log::info!("start --install-service");
+            crate::platform::install_service();
+            return None;
+        } else if args[0] == "--uninstall-service" {
+            log::info!("start --uninstall-service");
+            crate::platform::uninstall_service(false);
         } else if args[0] == "--service" {
             log::info!("start --service");
             crate::start_os_service();
@@ -238,49 +255,47 @@ pub fn core_main() -> Option<Vec<String>> {
             return None;
         } else if args[0] == "--password" {
             if args.len() == 2 {
-                if crate::platform::is_installed()
-                    && crate::platform::check_super_user_permission().unwrap_or_default()
-                {
-                    crate::ipc::set_permanent_password(args[1].to_owned()).unwrap();
-                    my_println!("Done!");
+                if crate::platform::is_installed() && is_root() {
+                    if let Err(err) = crate::ipc::set_permanent_password(args[1].to_owned()) {
+                        println!("{err}");
+                    } else {
+                        println!("Done!");
+                    }
                 } else {
-                    my_println!("Installation and administrative privileges required!");
+                    println!("Installation and administrative privileges required!");
                 }
             }
             return None;
         } else if args[0] == "--get-id" {
-            if crate::platform::is_installed()
-                && crate::platform::check_super_user_permission().unwrap_or_default()
-            {
-                my_println!("{}", crate::ipc::get_id());
+            if crate::platform::is_installed() && is_root() {
+                println!("{}", crate::ipc::get_id());
             } else {
-                my_println!("Installation and administrative privileges required!");
+                println!("Installation and administrative privileges required!");
             }
             return None;
         } else if args[0] == "--set-id" {
             if args.len() == 2 {
-                if crate::platform::is_installed()
-                    && crate::platform::check_super_user_permission().unwrap_or_default()
-                {
+                if crate::platform::is_installed() && is_root() {
                     let old_id = crate::ipc::get_id();
                     let mut res = crate::ui_interface::change_id_shared(args[1].to_owned(), old_id);
                     if res.is_empty() {
                         res = "Done!".to_owned();
                     }
-                    my_println!("{}", res);
+                    println!("{}", res);
                 } else {
-                    my_println!("Installation and administrative privileges required!");
+                    println!("Installation and administrative privileges required!");
                 }
             }
             return None;
         } else if args[0] == "--config" {
-            if args.len() == 2 {
-                if crate::platform::is_installed()
-                    && crate::platform::check_super_user_permission().unwrap_or_default()
-                {
-                    // arg: starting with `host=`, e.g. `host=127.0.0.1,api=https://test.com,key=asfs`,
-                    // or the filename (without ext) used in renaming exe.
-                    let name = format!("{}.exe", args[1]);
+            if args.len() == 2 && !args[0].contains("host=") {
+                if crate::platform::is_installed() && is_root() {
+                    // encrypted string used in renaming exe.
+                    let name = if args[1].ends_with(".exe") {
+                        args[1].to_owned()
+                    } else {
+                        format!("{}.exe", args[1])
+                    };
                     if let Ok(lic) = crate::license::get_license_from_string(&name) {
                         if !lic.host.is_empty() {
                             crate::ui_interface::set_option("key".into(), lic.key);
@@ -292,8 +307,20 @@ pub fn core_main() -> Option<Vec<String>> {
                         }
                     }
                 } else {
-                    my_println!("Installation and administrative privileges required!");
+                    println!("Installation and administrative privileges required!");
                 }
+            }
+            return None;
+        } else if args[0] == "--option" {
+            if crate::platform::is_installed() && is_root() {
+                if args.len() == 2 {
+                    let options = crate::ipc::get_options();
+                    println!("{}", options.get(&args[1]).unwrap_or(&"".to_owned()));
+                } else if args.len() == 3 {
+                    crate::ipc::set_option(&args[1], &args[2]);
+                }
+            } else {
+                println!("Installation and administrative privileges required!");
             }
             return None;
         } else if args[0] == "--check-hwcodec-config" {
@@ -467,4 +494,15 @@ fn try_send_by_dbus(uni_links: String) -> Option<Vec<String>> {
             return Some(Vec::new());
         }
     }
+}
+
+#[cfg(not(any(target_os = "android", target_os = "ios")))]
+fn is_root() -> bool {
+    #[cfg(windows)]
+    {
+        return crate::platform::is_elevated(None).unwrap_or_default()
+            || crate::platform::is_root();
+    }
+    #[allow(unreachable_code)]
+    crate::platform::is_root()
 }

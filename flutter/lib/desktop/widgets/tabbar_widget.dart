@@ -478,6 +478,8 @@ class WindowActionPanel extends StatefulWidget {
 
 class WindowActionPanelState extends State<WindowActionPanel>
     with MultiWindowListener, WindowListener {
+  final _saveFrameDebounce = Debouncer(delay: Duration(seconds: 1));
+
   @override
   void initState() {
     super.initState();
@@ -514,6 +516,7 @@ class WindowActionPanelState extends State<WindowActionPanel>
 
   void _setMaximize(bool maximize) {
     stateGlobal.setMaximize(maximize);
+    _saveFrameDebounce.call(_saveFrame);
     setState(() {});
   }
 
@@ -535,6 +538,26 @@ class WindowActionPanelState extends State<WindowActionPanel>
     }
     _setMaximize(false);
     super.onWindowUnmaximize();
+  }
+
+  _saveFrame() async {
+    if (widget.tabType == DesktopTabType.main) {
+      await saveWindowPosition(WindowType.Main);
+    } else if (kWindowType != null && kWindowId != null) {
+      await saveWindowPosition(kWindowType!, windowId: kWindowId);
+    }
+  }
+
+  @override
+  void onWindowMoved() {
+    _saveFrameDebounce.call(_saveFrame);
+    super.onWindowMoved();
+  }
+
+  @override
+  void onWindowResized() {
+    _saveFrameDebounce.call(_saveFrame);
+    super.onWindowMoved();
   }
 
   @override
@@ -678,7 +701,7 @@ Future<bool> closeConfirmDialog() async {
     submit() {
       final opt = "enable-confirm-closing-tabs";
       String value = bool2option(opt, confirm);
-      bind.mainSetOption(key: opt, value: value);
+      bind.mainSetLocalOption(key: opt, value: value);
       close(true);
     }
 

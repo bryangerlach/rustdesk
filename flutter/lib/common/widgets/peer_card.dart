@@ -644,6 +644,9 @@ abstract class BasePeerCard extends StatelessWidget {
       ),
       proc: () {
         () async {
+          if (gFFI.abModel.isFull(true)) {
+            return;
+          }
           if (!gFFI.abModel.idContainBy(peer.id)) {
             gFFI.abModel.addPeer(peer);
             await gFFI.abModel.pushAb();
@@ -794,7 +797,6 @@ class RecentPeerCard extends BasePeerCard {
     if (peer.platform == 'Windows') {
       menuItems.add(_rdpAction(context, peer.id));
     }
-    menuItems.add(_wolAction(peer.id));
     if (Platform.isWindows) {
       menuItems.add(_createShortCutAction(peer.id));
     }
@@ -846,7 +848,6 @@ class FavoritePeerCard extends BasePeerCard {
     if (peer.platform == 'Windows') {
       menuItems.add(_rdpAction(context, peer.id));
     }
-    menuItems.add(_wolAction(peer.id));
     if (Platform.isWindows) {
       menuItems.add(_createShortCutAction(peer.id));
     }
@@ -947,7 +948,6 @@ class AddressBookPeerCard extends BasePeerCard {
     if (peer.platform == 'Windows') {
       menuItems.add(_rdpAction(context, peer.id));
     }
-    menuItems.add(_wolAction(peer.id));
     if (Platform.isWindows) {
       menuItems.add(_createShortCutAction(peer.id));
     }
@@ -1087,7 +1087,6 @@ class MyGroupPeerCard extends BasePeerCard {
     if (peer.platform == 'Windows') {
       menuItems.add(_rdpAction(context, peer.id));
     }
-    menuItems.add(_wolAction(peer.id));
     if (Platform.isWindows) {
       menuItems.add(_createShortCutAction(peer.id));
     }

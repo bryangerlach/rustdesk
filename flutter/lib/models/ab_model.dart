@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hbb/models/model.dart';
@@ -10,14 +11,26 @@ import 'package:http/http.dart' as http;
 
 import '../common.dart';
 
+final syncAbOption = 'sync-ab-with-recent-sessions';
+bool shouldSyncAb() {
+  return bind.mainGetLocalOption(key: syncAbOption).isNotEmpty;
+}
+
+final sortAbTagsOption = 'sync-ab-tags';
+bool shouldSortTags() {
+  return bind.mainGetLocalOption(key: sortAbTagsOption).isNotEmpty;
+}
+
 class AbModel {
   final abLoading = false.obs;
   final abError = "".obs;
   final tags = [].obs;
   final peers = List<Peer>.empty(growable: true).obs;
+  final sortTags = shouldSortTags().obs;
 
   final selectedTags = List<String>.empty(growable: true).obs;
   var initialized = false;
+  var licensedDevices = 0;
 
   WeakReference<FFI> parent;
 
@@ -31,16 +44,21 @@ class AbModel {
       abLoading.value = true;
       abError.value = "";
     }
-    final api = "${await bind.mainGetApiServer()}/api/ab/get";
+    final api = "${await bind.mainGetApiServer()}/api/ab";
     try {
       var authHeaders = getHttpHeaders();
       authHeaders['Content-Type'] = "application/json";
-      final resp = await http.post(Uri.parse(api), headers: authHeaders);
+      authHeaders['Accept-Encoding'] = "gzip";
+      final resp = await http.get(Uri.parse(api), headers: authHeaders);
       if (resp.body.isNotEmpty && resp.body.toLowerCase() != "null") {
         Map<String, dynamic> json = jsonDecode(resp.body);
         if (json.containsKey('error')) {
           abError.value = json['error'];
         } else if (json.containsKey('data')) {
+          try {
+            gFFI.abModel.licensedDevices = json['licensed_devices'];
+            // ignore: empty_catches
+          } catch (e) {}
           final data = jsonDecode(json['data']);
           if (data != null) {
             tags.clear();
@@ -83,6 +101,15 @@ class AbModel {
     peers.add(peer);
   }
 
+  bool isFull(bool warn) {
+    final res = licensedDevices > 0 && peers.length >= licensedDevices;
+    if (res && warn) {
+      BotToast.showText(
+          contentColor: Colors.red, text: translate("exceed_max_devices"));
+    }
+    return res;
+  }
+
   void addPeer(Peer peer) {
     peers.removeWhere((e) => e.id == peer.id);
     peers.add(peer);
@@ -111,8 +138,17 @@ class AbModel {
     final body = jsonEncode({
       "data": jsonEncode({"tags": tags, "peers": peersJsonData})
     });
+    var request = http.Request('POST', Uri.parse(api));
+    // support compression
+    if (licensedDevices > 0 && body.length > 1024) {
+      authHeaders['Content-Encoding'] = "gzip";
+      request.bodyBytes = GZipCodec().encode(utf8.encode(body));
+    } else {
+      request.body = body;
+    }
+    request.headers.addAll(authHeaders);
     try {
-      await http.post(Uri.parse(api), headers: authHeaders, body: body);
+      await http.Client().send(request);
       await pullAb(quiet: true);
     } catch (e) {
       BotToast.showText(contentColor: Colors.red, text: e.toString());
