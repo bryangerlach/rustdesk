@@ -434,6 +434,7 @@ class _RemoteToolbarState extends State<RemoteToolbar> {
               setFullscreen: _setFullscreen,
               setMinimize: _minimize,
             ),
+            child: _MultiMonitorMenu(id: widget.id, ffi: widget.ffi),
           ),
         ),
       );
