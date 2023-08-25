@@ -1905,7 +1905,6 @@ class _DraggableShowHideState extends State<_DraggableShowHide> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildDraggable(context),
-        _MultiMonitorMenu(id: widget.id, ffi: widget.ffi),
         TextButton(
           onPressed: () {
             widget.setFullscreen(!isFullscreen);
