@@ -1910,7 +1910,7 @@ class _DraggableShowHideState extends State<_DraggableShowHide> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildDraggable(context),
-        _MultiMonitorMenu(id: widget.id, ffi: widget.ffi),
+        _CycleMonitorMenu(id: widget.id, ffi: widget.ffi),
         TextButton(
           onPressed: () {
             widget.setFullscreen(!isFullscreen);
@@ -2058,5 +2058,53 @@ class _MultiMonitorMenu extends StatelessWidget {
       );
     }
     return Row(children: rowChildren);
+  }
+}
+
+class _CycleMonitorMenu extends StatelessWidget {
+  final String id;
+  final FFI ffi;
+
+  const _CycleMonitorMenu({
+    Key? key,
+    required this.id,
+    required this.ffi,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final pi = ffi.ffiModel.pi;
+
+    //for (int i = 0; i < pi.displays.length; i++) {
+    return TextButton(
+      onPressed: () {
+        RxInt display = CurrentDisplayState.find(id);
+        display.value = display.value + 1;
+        if (display.value >= pi.displays.length) {
+          display.value = 0;
+        }
+        bind.sessionSwitchDisplay(
+            sessionId: ffi.sessionId, value: display.value);
+        pi.currentDisplay = display.value;
+      },
+      child: Stack(children: [
+        Container(
+            child: Align(
+                alignment: Alignment.center,
+                child: const Icon(
+                  Icons.personal_video,
+                  color: _ToolbarTheme.blueColor,
+                  size: 20.0,
+                ))),
+        Container(
+            child: Align(
+                alignment: Alignment(0.0, -0.4),
+                child: Text(
+                  '  ${CurrentDisplayState.find(id).value + 1}/${pi.displays.length}',
+                  style: const TextStyle(
+                      color: _ToolbarTheme.blueColor, fontSize: 8),
+                ))),
+      ]),
+    );
   }
 }
