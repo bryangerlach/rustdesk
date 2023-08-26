@@ -427,6 +427,8 @@ class _RemoteToolbarState extends State<RemoteToolbar> {
             elevation: _ToolbarTheme.elevation,
             shadowColor: MyTheme.color(context).shadow,
             child: _DraggableShowHide(
+              id: widget.id,
+              ffi: widget.ffi,
               sessionId: widget.ffi.sessionId,
               dragging: _dragging,
               fractionX: _fractionX,
@@ -1587,26 +1589,26 @@ class _IconMenuButtonState extends State<_IconMenuButton> {
       width: _ToolbarTheme.buttonSize,
       height: _ToolbarTheme.buttonSize,
       child: MenuItemButton(
-        style: ButtonStyle(
-            backgroundColor: MaterialStatePropertyAll(Colors.transparent),
-            padding: MaterialStatePropertyAll(EdgeInsets.zero),
-            overlayColor: MaterialStatePropertyAll(Colors.transparent)),
-        onHover: (value) => setState(() {
-          hover = value;
-        }),
-        onPressed: widget.onPressed,
-        child: Tooltip(
-          message: translate(widget.tooltip),
-          child: Material(
-              type: MaterialType.transparency,
-              child: Ink(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(_ToolbarTheme.iconRadius),
-                    color: hover ? widget.hoverColor : widget.color,
-                  ),
-                  child: icon)),
-        )
-      ),
+          style: ButtonStyle(
+              backgroundColor: MaterialStatePropertyAll(Colors.transparent),
+              padding: MaterialStatePropertyAll(EdgeInsets.zero),
+              overlayColor: MaterialStatePropertyAll(Colors.transparent)),
+          onHover: (value) => setState(() {
+                hover = value;
+              }),
+          onPressed: widget.onPressed,
+          child: Tooltip(
+            message: translate(widget.tooltip),
+            child: Material(
+                type: MaterialType.transparency,
+                child: Ink(
+                    decoration: BoxDecoration(
+                      borderRadius:
+                          BorderRadius.circular(_ToolbarTheme.iconRadius),
+                      color: hover ? widget.hoverColor : widget.color,
+                    ),
+                    child: icon)),
+          )),
     ).marginSymmetric(
         horizontal: widget.hMargin ?? _ToolbarTheme.buttonHMargin,
         vertical: widget.vMargin ?? _ToolbarTheme.buttonVMargin);
@@ -1670,18 +1672,17 @@ class _IconSubmenuButtonState extends State<_IconSubmenuButton> {
             onHover: (value) => setState(() {
                   hover = value;
                 }),
-                child: Tooltip(
-                  message: translate(widget.tooltip),
-                  child: Material(
+            child: Tooltip(
+                message: translate(widget.tooltip),
+                child: Material(
                     type: MaterialType.transparency,
                     child: Ink(
-                      decoration: BoxDecoration(
-                        borderRadius:
-                          BorderRadius.circular(_ToolbarTheme.iconRadius),
+                        decoration: BoxDecoration(
+                          borderRadius:
+                              BorderRadius.circular(_ToolbarTheme.iconRadius),
                           color: hover ? widget.hoverColor : widget.color,
-                      ),
-                      child: icon))
-                    ),
+                        ),
+                        child: icon))),
             menuChildren: widget.menuChildren
                 .map((e) => _buildPointerTrackWidget(e, widget.ffi))
                 .toList()));
@@ -1805,6 +1806,8 @@ class RdoMenuButton<T> extends StatelessWidget {
 }
 
 class _DraggableShowHide extends StatefulWidget {
+  final String id;
+  final FFI ffi;
   final SessionID sessionId;
   final RxDouble fractionX;
   final RxBool dragging;
@@ -1815,6 +1818,8 @@ class _DraggableShowHide extends StatefulWidget {
 
   const _DraggableShowHide({
     Key? key,
+    required this.id,
+    required this.ffi,
     required this.sessionId,
     required this.fractionX,
     required this.dragging,
@@ -1905,6 +1910,7 @@ class _DraggableShowHideState extends State<_DraggableShowHide> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildDraggable(context),
+        _MultiMonitorMenu(id: widget.id, ffi: widget.ffi),
         TextButton(
           onPressed: () {
             widget.setFullscreen(!isFullscreen);
