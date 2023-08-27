@@ -20,13 +20,13 @@ class PeerSortType {
   static const String remoteId = 'Remote ID';
   static const String remoteHost = 'Remote Host';
   static const String username = 'Username';
-  // static const String status = 'Status';
+  static const String status = 'Status';
 
   static List<String> values = [
     PeerSortType.remoteId,
     PeerSortType.remoteHost,
     PeerSortType.username,
-    // PeerSortType.status
+    PeerSortType.status
   ];
 }
 
@@ -283,9 +283,9 @@ class _PeersViewState extends State<_PeersView> with WindowListener {
           peers.sort((p1, p2) =>
               p1.username.toLowerCase().compareTo(p2.username.toLowerCase()));
           break;
-        // case PeerSortType.status:
-        // peers.sort((p1, p2) => p1.online ? -1 : 1);
-        // break;
+        case PeerSortType.status:
+          peers.sort((p1, p2) => p1.online ? -1 : 1);
+          break;
       }
     }
 
