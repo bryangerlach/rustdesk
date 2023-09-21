@@ -777,6 +777,7 @@ class ScreenAdjustor {
       }
       await WindowController.fromWindowId(windowId)
           .setFrame(Rect.fromLTWH(left, top, width, height));
+      stateGlobal.setMaximized(false);
     }
   }
 
