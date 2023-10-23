@@ -2163,8 +2163,7 @@ class _CycleMonitorMenu extends StatelessWidget {
         if (display.value >= pi.displays.length) {
           display.value = 0;
         }
-        bind.sessionSwitchDisplay(
-            sessionId: ffi.sessionId, value: display.value);
+        openMonitorInTheSameTab(display.value, ffi, pi);
         pi.currentDisplay = display.value;
       },
       child: Stack(children: [
