@@ -16,8 +16,8 @@ env:
   FLUTTER_VERSION: "3.13.0"
   FLUTTER_RUST_BRIDGE_VERSION: "1.75.3"
   # for arm64 linux
-  FLUTTER_ELINUX_VERSION: "3.10.6"
-  FLUTTER_ELINUX_COMMIT_ID: "410b3ca42f2cd0c485edf517a1666652bab442d4"
+  FLUTTER_ELINUX_VERSION: "3.13.0"
+  FLUTTER_ELINUX_COMMIT_ID: "efbf63d9c66b9f6ec30e9ad4611189aa80003d31"
   TAG_NAME: "${{ inputs.upload-tag }}"
   # vcpkg version: 2023.04.15
   # for multiarch gcc compatibility
