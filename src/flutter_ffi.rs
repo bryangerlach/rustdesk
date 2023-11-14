@@ -224,6 +224,12 @@ pub fn session_toggle_option(session_id: SessionID, value: String) {
     }
 }
 
+pub fn session_toggle_privacy_mode(session_id: SessionID, impl_key: String, on: bool) {
+    if let Some(session) = sessions::get_session_by_session_id(&session_id) {
+        session.toggle_privacy_mode(impl_key, on);
+    }
+}
+
 pub fn session_get_flutter_option(session_id: SessionID, k: String) -> Option<String> {
     if let Some(session) = sessions::get_session_by_session_id(&session_id) {
         Some(session.get_flutter_option(k))
@@ -395,6 +401,7 @@ pub fn session_is_keyboard_mode_supported(session_id: SessionID, mode: String) -
             SyncReturn(is_keyboard_mode_supported(
                 &mode,
                 session.get_peer_version(),
+                &session.peer_platform(),
             ))
         } else {
             SyncReturn(false)
@@ -1088,7 +1095,7 @@ pub fn main_get_user_default_option(key: String) -> SyncReturn<String> {
 }
 
 pub fn main_handle_relay_id(id: String) -> String {
-    handle_relay_id(id)
+    handle_relay_id(&id).to_owned()
 }
 
 pub fn main_get_main_display() -> SyncReturn<String> {
@@ -1528,6 +1535,21 @@ pub fn cm_switch_back(conn_id: i32) {
     crate::ui_cm_interface::switch_back(conn_id);
 }
 
+pub fn cm_get_config(name: String) -> String {
+    #[cfg(not(target_os = "ios"))]
+    {
+        if let Ok(Some(v)) = crate::ipc::get_config(&name) {
+            v
+        } else {
+            "".to_string()
+        }
+    }
+    #[cfg(target_os = "ios")]
+    {
+        "".to_string()
+    }
+}
+
 pub fn main_get_build_date() -> String {
     crate::BUILD_DATE.to_string()
 }
@@ -1956,6 +1978,17 @@ pub fn is_selinux_enforcing() -> SyncReturn<bool> {
     {
         SyncReturn(false)
     }
+}
+
+pub fn main_default_privacy_mode_impl() -> SyncReturn<String> {
+    SyncReturn(crate::privacy_mode::DEFAULT_PRIVACY_MODE_IMPL.to_owned())
+}
+
+pub fn main_supported_privacy_mode_impls() -> SyncReturn<String> {
+    SyncReturn(
+        serde_json::to_string(&crate::privacy_mode::get_supported_privacy_mode_impl())
+            .unwrap_or_default(),
+    )
 }
 
 #[cfg(target_os = "android")]
