@@ -115,6 +115,13 @@ class _RemotePageState extends State<RemotePage> {
           gFFI.ffiModel.pi.version.isNotEmpty) {
         gFFI.invokeMethod("enable_soft_keyboard", false);
       }
+    } else {
+      _timer?.cancel();
+      _timer = Timer(kMobileDelaySoftKeyboardFocus, () {
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+            overlays: SystemUiOverlay.values);
+        _mobileFocusNode.requestFocus();
+      });
     }
     // update for Scaffold
     setState(() {});
@@ -204,12 +211,12 @@ class _RemotePageState extends State<RemotePage> {
     _value = initText;
     setState(() => _showEdit = false);
     _timer?.cancel();
-    _timer = Timer(Duration(milliseconds: 30), () {
+    _timer = Timer(kMobileDelaySoftKeyboard, () {
       // show now, and sleep a while to requestFocus to
       // make sure edit ready, so that keyboard wont show/hide/show/hide happen
       setState(() => _showEdit = true);
       _timer?.cancel();
-      _timer = Timer(Duration(milliseconds: 30), () {
+      _timer = Timer(kMobileDelaySoftKeyboardFocus, () {
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
             overlays: SystemUiOverlay.values);
         _mobileFocusNode.requestFocus();
