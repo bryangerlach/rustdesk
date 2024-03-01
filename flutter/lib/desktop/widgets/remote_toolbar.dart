@@ -761,15 +761,18 @@ class _MonitorMenu extends StatelessWidget {
       final children = <Widget>[];
       for (var i = 0; i < pi.displays.length; i++) {
         final d = pi.displays[i];
-        final fontSize = (d.width * scale < d.height * scale
-                ? d.width * scale
-                : d.height * scale) *
+        double s = d.scale;
+        int dWidth = d.width.toDouble() ~/ s;
+        int dHeight = d.height.toDouble() ~/ s;
+        final fontSize = (dWidth * scale < dHeight * scale
+                ? dWidth * scale
+                : dHeight * scale) *
             0.65;
         children.add(Positioned(
           left: (d.x - rect.left) * scale + startX,
           top: (d.y - rect.top) * scale + startY,
-          width: d.width * scale,
-          height: d.height * scale,
+          width: dWidth * scale,
+          height: dHeight * scale,
           child: Container(
             decoration: BoxDecoration(
               border: Border.all(
@@ -1050,10 +1053,11 @@ class _DisplayMenuState extends State<_DisplayMenu> {
         ffi: widget.ffi,
         screenAdjustor: _screenAdjustor,
       ),
-      _VirtualDisplayMenu(
-        id: widget.id,
-        ffi: widget.ffi,
-      ),
+      // We may add this feature if it is needed and we have an EV certificate.
+      // _VirtualDisplayMenu(
+      //   id: widget.id,
+      //   ffi: widget.ffi,
+      // ),
       Divider(),
       toggles(),
     ];
@@ -1288,7 +1292,9 @@ class _ResolutionsMenuState extends State<_ResolutionsMenu> {
     if (lastGroupValue == _kCustomResolutionValue) {
       _groupValue = _kCustomResolutionValue;
     } else {
-      _groupValue = '${rect?.width.toInt()}x${rect?.height.toInt()}';
+      var scale = pi.scaleOfDisplay(pi.currentDisplay);
+      _groupValue =
+          '${(rect?.width ?? 0) ~/ scale}x${(rect?.height ?? 0) ~/ scale}';
     }
   }
 
@@ -1385,6 +1391,11 @@ class _ResolutionsMenuState extends State<_ResolutionsMenu> {
       BuildContext context, bool showOriginalBtn) {
     final display = pi.tryGetDisplayIfNotAllDisplay();
     if (display == null) {
+      return Offstage();
+    }
+    if (!resolutions.any((e) =>
+        e.width == display.originalWidth &&
+        e.height == display.originalHeight)) {
       return Offstage();
     }
     return Offstage(
@@ -1733,7 +1744,7 @@ class _KeyboardMenu extends StatelessWidget {
             ? (value) async {
                 if (value == null) return;
                 await bind.sessionToggleOption(
-                    sessionId: ffi.sessionId, value: 'view-only');
+                    sessionId: ffi.sessionId, value: kOptionViewOnly);
                 ffiModel.setViewOnly(id, value);
               }
             : null,
