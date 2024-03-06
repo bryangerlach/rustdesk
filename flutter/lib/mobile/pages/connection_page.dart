@@ -99,7 +99,7 @@ class _ConnectionPageState extends State<ConnectionPage> {
   /// Connects to the selected peer.
   void onConnect() {
     var id = _idController.id;
-    connect(context, id);
+    connect(context, "rustdesk://$id");
   }
 
   /// UI for software update.
