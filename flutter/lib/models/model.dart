@@ -355,10 +355,8 @@ class FfiModel with ChangeNotifier {
           final id = evt['id'];
           final password = evt['password'];
           if (id != null && password != null) {
-            if (gFFI.abModel
-                .changePassword(id.toString(), password.toString())) {
-              gFFI.abModel.pushAb(toastIfFail: false, toastIfSucc: false);
-            }
+            gFFI.abModel
+                .changePersonalHashPassword(id.toString(), password.toString());
           }
         }
       } else if (name == "cm_file_transfer_log") {
@@ -387,7 +385,8 @@ class FfiModel with ChangeNotifier {
 
   onUrlSchemeReceived(Map<String, dynamic> evt) {
     final url = evt['url'].toString().trim();
-    if (url.startsWith(bind.mainUriPrefixSync()) && handleUriLink(uriString: url)) {
+    if (url.startsWith(bind.mainUriPrefixSync()) &&
+        handleUriLink(uriString: url)) {
       return;
     }
     switch (url) {
@@ -2178,6 +2177,7 @@ class FFI {
     bool isRdp = false,
     String? switchUuid,
     String? password,
+    bool? isSharedPassword,
     bool? forceRelay,
     int? tabWindowId,
     int? display,
@@ -2211,6 +2211,7 @@ class FFI {
         switchUuid: switchUuid ?? '',
         forceRelay: forceRelay ?? false,
         password: password ?? '',
+        isSharedPassword: isSharedPassword ?? false,
       );
     } else if (display != null) {
       if (displays == null) {
@@ -2227,6 +2228,9 @@ class FFI {
       bind.sessionTryAddDisplay(
           sessionId: sessionId, displays: Int32List.fromList(displays));
       ffiModel.pi.currentDisplay = display;
+    }
+    if (connType == ConnType.defaultConn && useTextureRender) {
+      textureModel.updateCurrentDisplay(display ?? 0);
     }
     final stream = bind.sessionStart(sessionId: sessionId, id: id);
     final cb = ffiModel.startEventListener(sessionId, id);
