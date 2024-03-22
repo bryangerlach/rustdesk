@@ -238,17 +238,6 @@ enum ShareRule {
   }
 }
 
-enum ShareLevel {
-  user(1),
-  group(2),
-  team(3);
-
-  const ShareLevel(this.value);
-  final int value;
-
-  static String teamName = translate('Everyone');
-}
-
 class AbProfile {
   String guid;
   String name;
@@ -275,21 +264,4 @@ class AbTag {
   AbTag.fromJson(Map<String, dynamic> json)
       : name = json['name'] ?? '',
         color = json['color'] ?? '';
-}
-
-class AbRulePayload {
-  String guid;
-  int level;
-  String name;
-  int rule;
-  String? group;
-
-  AbRulePayload(this.guid, this.level, this.name, this.rule, {this.group});
-
-  AbRulePayload.fromJson(Map<String, dynamic> json)
-      : guid = json['guid'] ?? '',
-        level = json['level'] ?? 0,
-        name = json['name'] ?? '',
-        rule = json['rule'] ?? 0,
-        group = json['group'];
 }
