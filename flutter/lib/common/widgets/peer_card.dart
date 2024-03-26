@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:bot_toast/bot_toast.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_hbb/common/widgets/dialog.dart';
 import 'package:flutter_hbb/consts.dart';
+import 'package:flutter_hbb/models/ab_model.dart';
 import 'package:flutter_hbb/models/peer_tab_model.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -875,10 +874,10 @@ class RecentPeerCard extends BasePeerCard {
     }
     // menuItems.add(await _openNewConnInOptAction(peer.id));
     menuItems.add(await _forceAlwaysRelayAction(peer.id));
-    if (Platform.isWindows && peer.platform == kPeerPlatformWindows) {
+    if (isWindows && peer.platform == kPeerPlatformWindows) {
       menuItems.add(_rdpAction(context, peer.id));
     }
-    if (Platform.isWindows) {
+    if (isWindows) {
       menuItems.add(_createShortCutAction(peer.id));
     }
     menuItems.add(MenuEntryDivider());
@@ -927,10 +926,10 @@ class FavoritePeerCard extends BasePeerCard {
     }
     // menuItems.add(await _openNewConnInOptAction(peer.id));
     menuItems.add(await _forceAlwaysRelayAction(peer.id));
-    if (Platform.isWindows && peer.platform == kPeerPlatformWindows) {
+    if (isWindows && peer.platform == kPeerPlatformWindows) {
       menuItems.add(_rdpAction(context, peer.id));
     }
-    if (Platform.isWindows) {
+    if (isWindows) {
       menuItems.add(_createShortCutAction(peer.id));
     }
     menuItems.add(MenuEntryDivider());
@@ -979,11 +978,11 @@ class DiscoveredPeerCard extends BasePeerCard {
     }
     // menuItems.add(await _openNewConnInOptAction(peer.id));
     menuItems.add(await _forceAlwaysRelayAction(peer.id));
-    if (Platform.isWindows && peer.platform == kPeerPlatformWindows) {
+    if (isWindows && peer.platform == kPeerPlatformWindows) {
       menuItems.add(_rdpAction(context, peer.id));
     }
     menuItems.add(_wolAction(peer.id));
-    if (Platform.isWindows) {
+    if (isWindows) {
       menuItems.add(_createShortCutAction(peer.id));
     }
 
@@ -1027,10 +1026,10 @@ class AddressBookPeerCard extends BasePeerCard {
     }
     // menuItems.add(await _openNewConnInOptAction(peer.id));
     // menuItems.add(await _forceAlwaysRelayAction(peer.id));
-    if (Platform.isWindows && peer.platform == kPeerPlatformWindows) {
+    if (isWindows && peer.platform == kPeerPlatformWindows) {
       menuItems.add(_rdpAction(context, peer.id));
     }
-    if (Platform.isWindows) {
+    if (isWindows) {
       menuItems.add(_createShortCutAction(peer.id));
     }
     if (gFFI.abModel.current.canWrite()) {
@@ -1061,9 +1060,11 @@ class AddressBookPeerCard extends BasePeerCard {
     return menuItems;
   }
 
+  // address book does not need to update
   @protected
   @override
-  void _update() => gFFI.abModel.pullAb(quiet: true);
+  void _update() =>
+      {}; //gFFI.abModel.pullAb(force: ForcePullAb.current, quiet: true);
 
   @protected
   MenuEntryBase<String> _editTagAction(String id) {
@@ -1154,10 +1155,10 @@ class MyGroupPeerCard extends BasePeerCard {
     }
     // menuItems.add(await _openNewConnInOptAction(peer.id));
     // menuItems.add(await _forceAlwaysRelayAction(peer.id));
-    if (Platform.isWindows && peer.platform == kPeerPlatformWindows) {
+    if (isWindows && peer.platform == kPeerPlatformWindows) {
       menuItems.add(_rdpAction(context, peer.id));
     }
-    if (Platform.isWindows) {
+    if (isWindows) {
       menuItems.add(_createShortCutAction(peer.id));
     }
     // menuItems.add(MenuEntryDivider());

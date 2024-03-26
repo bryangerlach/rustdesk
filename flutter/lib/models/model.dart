@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -691,7 +690,7 @@ class FfiModel with ChangeNotifier {
     // Because this function is asynchronous, there's an "await" in this function.
     cachedPeerData.peerInfo = {...evt};
 
-    // recent peer updated by handle_peer_info(ui_session_interface.rs) --> handle_peer_info(client.rs) --> save_config(client.rs)
+    // Recent peer is updated by handle_peer_info(ui_session_interface.rs) --> handle_peer_info(client.rs) --> save_config(client.rs)
     bind.mainLoadRecentPeers();
 
     parent.target?.dialogManager.dismissAll();
@@ -869,7 +868,16 @@ class FfiModel with ChangeNotifier {
 
   handleResolutions(String id, dynamic resolutions) {
     try {
-      final List<dynamic> dynamicArray = jsonDecode(resolutions as String);
+      final resolutionsObj = json.decode(resolutions as String);
+      late List<dynamic> dynamicArray;
+      if (resolutionsObj is Map) {
+        // The web version
+        dynamicArray = (resolutionsObj as Map<String, dynamic>)['resolutions']
+            as List<dynamic>;
+      } else {
+        // The rust version
+        dynamicArray = resolutionsObj as List<dynamic>;
+      }
       List<Resolution> arr = List.empty(growable: true);
       for (int i = 0; i < dynamicArray.length; i++) {
         var width = dynamicArray[i]["width"];
@@ -1537,7 +1545,7 @@ class CursorData {
     }
 
     if (_doubleToInt(oldScale) != _doubleToInt(scale)) {
-      if (Platform.isWindows) {
+      if (isWindows) {
         data = img2
             .copyResize(
               image,
@@ -1616,7 +1624,7 @@ class PredefinedCursor {
             data, defaultImg.width, defaultImg.height, ui.PixelFormat.rgba8888);
 
         double scale = 1.0;
-        if (Platform.isWindows) {
+        if (isWindows) {
           data = _image2!.getBytes(order: img2.ChannelOrder.bgra);
         } else {
           data = Uint8List.fromList(img2.encodePng(_image2!));
@@ -1841,7 +1849,7 @@ class CursorModel with ChangeNotifier {
     Uint8List? data;
     img2.Image imgOrigin = img2.Image.fromBytes(
         width: w, height: h, bytes: rgba.buffer, order: img2.ChannelOrder.rgba);
-    if (Platform.isWindows) {
+    if (isWindows) {
       data = imgOrigin.getBytes(order: img2.ChannelOrder.bgra);
     } else {
       ByteData? imgBytes =
@@ -2200,6 +2208,7 @@ class FFI {
       imageModel.id = id;
       cursorModel.peerId = id;
     }
+
     // If tabWindowId != null, this session is a "tab -> window" one.
     // Else this session is a new one.
     if (tabWindowId == null) {
@@ -2235,6 +2244,14 @@ class FFI {
       textureModel.updateCurrentDisplay(display ?? 0);
     }
     final stream = bind.sessionStart(sessionId: sessionId, id: id);
+    if (isWeb) {
+      platformFFI.setRgbaCallback((int display, Uint8List data) {
+        onEvent2UIRgba();
+        imageModel.onRgba(display, data);
+      });
+      return;
+    }
+
     final cb = ffiModel.startEventListener(sessionId, id);
 
     // Force refresh displays.
