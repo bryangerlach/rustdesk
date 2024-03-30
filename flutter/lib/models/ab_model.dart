@@ -49,11 +49,11 @@ class AbModel {
   RxList<String> get selectedTags => current.selectedTags;
 
   RxBool get currentAbLoading => current.abLoading;
+  bool get currentAbEmpty => current.peers.isEmpty && current.tags.isEmpty;
   RxString get currentAbPullError => current.pullError;
   RxString get currentAbPushError => current.pushError;
   String? _personalAbGuid;
-  RxBool legacyMode = true.obs;
-  var _modeTested = false; // whether the mode has been tested
+  RxBool legacyMode = false.obs;
 
   final sortTags = shouldSortTags().obs;
   final filterByIntersection = filterAbTagByIntersection().obs;
@@ -83,7 +83,6 @@ class AbModel {
 
   reset() async {
     print("reset ab model");
-    _modeTested = false;
     addressbooks.clear();
     setCurrentName('');
     await bind.mainClearAb();
@@ -114,23 +113,16 @@ class AbModel {
     debugPrint("pullAb, force: $force, quiet: $quiet");
     if (!gFFI.userModel.isLogin) return;
     if (force == null && listInitialized && current.initialized) return;
-    try {
-      if (!_modeTested) {
-        // Get personal address book guid
+    if (!listInitialized || force == ForcePullAb.listAndCurrent) {
+      try {
+        // Read personal guid every time to avoid upgrading the server without closing the main window
         _personalAbGuid = null;
         await _getPersonalAbGuid();
         // Determine legacy mode based on whether _personalAbGuid is null
         legacyMode.value = _personalAbGuid == null;
-        _modeTested = true;
-        if (!legacyMode.value) {
+        if (!legacyMode.value && _maxPeerOneAb == 0) {
           await _getAbSettings();
         }
-      }
-    } catch (e) {
-      debugPrint("test ab mode error: $e");
-    }
-    if (!listInitialized || force == ForcePullAb.listAndCurrent) {
-      try {
         if (_personalAbGuid != null) {
           debugPrint("pull ab list");
           List<AbProfile> abProfiles = List.empty(growable: true);
@@ -159,10 +151,7 @@ class AbModel {
         // set current address book name
         if (!listInitialized) {
           listInitialized = true;
-          final name = bind.getLocalFlutterOption(k: 'current-ab-name');
-          if (addressbooks.containsKey(name)) {
-            _currentName.value = name;
-          }
+          trySetCurrentToLast();
         }
         if (!addressbooks.containsKey(_currentName.value)) {
           setCurrentName(legacyMode.value
@@ -559,6 +548,13 @@ class AbModel {
     return res;
   }
 
+  trySetCurrentToLast() {
+    final name = bind.getLocalFlutterOption(k: 'current-ab-name');
+    if (addressbooks.containsKey(name)) {
+      _currentName.value = name;
+    }
+  }
+
   Future<void> loadCache() async {
     try {
       if (_cacheLoadOnceFlag || currentAbLoading.value) return;
@@ -570,6 +566,8 @@ class AbModel {
       final data = jsonDecode(cache);
       if (data == null || data['access_token'] != access_token) return;
       _deserializeCache(data);
+      legacyMode.value = addressbooks.containsKey(_legacyAddressBookName);
+      trySetCurrentToLast();
     } catch (e) {
       debugPrint("load ab cache: $e");
     }
@@ -664,12 +662,12 @@ class AbModel {
       }
     }
     if (!current.initialized) {
-      await current.pullAb(quiet: true);
-      _saveCache();
+      await current.pullAb(quiet: false);
     }
     _refreshTab();
     if (oldName != _currentName.value) {
       _syncAllFromRecent = true;
+      _saveCache();
     }
   }
 
@@ -755,7 +753,9 @@ abstract class BaseAb {
       pullError.value = "";
     }
     initialized = false;
-    initialized = await pullAbImpl(quiet: quiet);
+    try {
+      initialized = await pullAbImpl(quiet: quiet);
+    } catch (_) {}
     abLoading.value = false;
   }
 
@@ -1257,12 +1257,12 @@ class Ab extends BaseAb {
   Future<bool> pullAbImpl({quiet = false}) async {
     bool ret = true;
     List<Peer> tmpPeers = [];
-    if (!await _fetchPeers(tmpPeers)) {
+    if (!await _fetchPeers(tmpPeers, quiet: quiet)) {
       ret = false;
     }
     peers.value = tmpPeers;
     List<AbTag> tmpTags = [];
-    if (!await _fetchTags(tmpTags)) {
+    if (!await _fetchTags(tmpTags, quiet: quiet)) {
       ret = false;
     }
     tags.value = tmpTags.map((e) => e.name).toList();
@@ -1274,8 +1274,9 @@ class Ab extends BaseAb {
     return ret;
   }
 
-  Future<bool> _fetchPeers(List<Peer> tmpPeers) async {
+  Future<bool> _fetchPeers(List<Peer> tmpPeers, {quiet = false}) async {
     final api = "${await bind.mainGetApiServer()}/api/ab/peers";
+    int? statusCode;
     try {
       var uri0 = Uri.parse(api);
       final pageSize = 100;
@@ -1296,6 +1297,7 @@ class Ab extends BaseAb {
         var headers = getHttpHeaders();
         headers['Content-Type'] = "application/json";
         final resp = await http.post(uri, headers: headers);
+        statusCode = resp.statusCode;
         Map<String, dynamic> json =
             _jsonDecodeRespMap(utf8.decode(resp.bodyBytes), resp.statusCode);
         if (json.containsKey('error')) {
@@ -1324,13 +1326,23 @@ class Ab extends BaseAb {
       } while (current * pageSize < total);
       return true;
     } catch (err) {
-      debugPrint('_fetchPeers err: ${err.toString()}');
+      if (!quiet) {
+        pullError.value =
+            '${translate('pull_ab_failed_tip')}: ${translate(err.toString())}';
+      }
+    } finally {
+      if (pullError.isNotEmpty) {
+        if (statusCode == 401) {
+          gFFI.userModel.reset(resetOther: true);
+        }
+      }
     }
     return false;
   }
 
-  Future<bool> _fetchTags(List<AbTag> tmpTags) async {
+  Future<bool> _fetchTags(List<AbTag> tmpTags, {quiet = false}) async {
     final api = "${await bind.mainGetApiServer()}/api/ab/tags/${profile.guid}";
+    int? statusCode;
     try {
       var uri0 = Uri.parse(api);
       var uri = Uri(
@@ -1342,6 +1354,7 @@ class Ab extends BaseAb {
       var headers = getHttpHeaders();
       headers['Content-Type'] = "application/json";
       final resp = await http.post(uri, headers: headers);
+      statusCode = resp.statusCode;
       List<dynamic> json =
           _jsonDecodeRespList(utf8.decode(resp.bodyBytes), resp.statusCode);
       if (resp.statusCode != 200) {
@@ -1359,7 +1372,16 @@ class Ab extends BaseAb {
       }
       return true;
     } catch (err) {
-      debugPrint('_fetchTags err: ${err.toString()}');
+      if (!quiet) {
+        pullError.value =
+            '${translate('pull_ab_failed_tip')}: ${translate(err.toString())}';
+      }
+    } finally {
+      if (pullError.isNotEmpty) {
+        if (statusCode == 401) {
+          gFFI.userModel.reset(resetOther: true);
+        }
+      }
     }
     return false;
   }
