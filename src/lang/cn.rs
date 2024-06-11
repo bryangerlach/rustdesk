@@ -607,5 +607,15 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Follow remote window focus", "跟随远程窗口焦点"),
         ("default_proxy_tip", "默认代理协议及端口为 Socks5 和 1080"),
         ("no_audio_input_device_tip", "未找到音频输入设备"),
+        ("Incoming", "被控"),
+        ("Outgoing", "主控"),
+        ("Clear Wayland screen selection", "清除 Wayland 的屏幕选择"),
+        ("clear_Wayland_screen_selection_tip", "清除 Wayland 的屏幕选择后，您可以重新选择分享的屏幕。"),
+        ("confirm_clear_Wayland_screen_selection_tip", "是否确认清除 Wayland 的分享屏幕选择？"),
+        ("android_new_voice_call_tip", "收到新的语音呼叫请求。如果您接受，音频将切换为语音通信。"),
+        ("texture_render_tip", "使用纹理渲染，使图片更加流畅。 如果您遭遇渲染问题，可尝试关闭此选项。"),
+        ("Use texture rendering", "使用纹理渲染"),
+        ("Floating window", "悬浮窗"),
+        ("floating_window_tip", "有助于保持RustDesk后台服务"),
     ].iter().cloned().collect();
 }

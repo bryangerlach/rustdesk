@@ -77,14 +77,20 @@ class _DesktopServerPageState extends State<DesktopServerPage>
         ChangeNotifierProvider.value(value: gFFI.chatModel),
       ],
       child: Consumer<ServerModel>(
-        builder: (context, serverModel, child) => Container(
-          decoration: BoxDecoration(
-              border: Border.all(color: MyTheme.color(context).border!)),
-          child: Scaffold(
+        builder: (context, serverModel, child) {
+          final body = Scaffold(
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             body: ConnectionManager(),
-          ),
-        ),
+          );
+          return isLinux
+              ? buildVirtualWindowFrame(context, body)
+              : Container(
+                  decoration: BoxDecoration(
+                      border:
+                          Border.all(color: MyTheme.color(context).border!)),
+                  child: body,
+                );
+        },
       ),
     );
   }
@@ -283,9 +289,9 @@ class ConnectionManagerState extends State<ConnectionManager> {
       windowManager.close();
       return true;
     } else {
-      final opt = "enable-confirm-closing-tabs";
       final bool res;
-      if (!option2bool(opt, bind.mainGetLocalOption(key: opt))) {
+      if (!option2bool(kOptionEnableConfirmClosingTabs,
+          bind.mainGetLocalOption(key: kOptionEnableConfirmClosingTabs))) {
         res = true;
       } else {
         res = await closeConfirmDialog();

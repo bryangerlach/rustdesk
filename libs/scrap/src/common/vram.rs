@@ -1,12 +1,12 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     ffi::c_void,
     sync::{Arc, Mutex},
 };
 
 use crate::{
     codec::{base_bitrate, enable_vram_option, EncoderApi, EncoderCfg, Quality},
-    AdapterDevice, CodecFormat, CodecName, EncodeInput, EncodeYuvFormat, Pixfmt,
+    AdapterDevice, CodecFormat, EncodeInput, EncodeYuvFormat, Pixfmt,
 };
 use hbb_common::{
     anyhow::{anyhow, bail, Context},
@@ -30,6 +30,7 @@ use hwcodec::{
 // https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getadapterluid#remarks
 lazy_static::lazy_static! {
     static ref ENOCDE_NOT_USE: Arc<Mutex<HashMap<usize, bool>>> = Default::default();
+    static ref FALLBACK_GDI_DISPLAYS: Arc<Mutex<HashSet<usize>>> = Default::default();
 }
 
 #[derive(Debug, Clone)]
@@ -87,10 +88,7 @@ impl EncoderApi for VRamEncoder {
                         same_bad_len_counter: 0,
                         config,
                     }),
-                    Err(_) => {
-                        hbb_common::config::HwCodecConfig::clear_vram();
-                        Err(anyhow!(format!("Failed to create encoder")))
-                    }
+                    Err(_) => Err(anyhow!(format!("Failed to create encoder"))),
                 }
             }
             _ => Err(anyhow!("encoder type mismatch")),
@@ -183,6 +181,18 @@ impl EncoderApi for VRamEncoder {
     fn support_abr(&self) -> bool {
         self.config.device.vendor_id != ADAPTER_VENDOR_INTEL as u32
     }
+
+    fn support_changing_quality(&self) -> bool {
+        true
+    }
+
+    fn latency_free(&self) -> bool {
+        true
+    }
+
+    fn is_hardware(&self) -> bool {
+        true
+    }
 }
 
 impl VRamEncoder {
@@ -203,6 +213,11 @@ impl VRamEncoder {
     }
 
     pub fn available(format: CodecFormat) -> Vec<FeatureContext> {
+        let fallbacks = FALLBACK_GDI_DISPLAYS.lock().unwrap().clone();
+        if !fallbacks.is_empty() {
+            log::info!("fallback gdi displays not empty: {fallbacks:?}");
+            return vec![];
+        }
         let not_use = ENOCDE_NOT_USE.lock().unwrap().clone();
         if not_use.values().any(|not_use| *not_use) {
             log::info!("currently not use vram encoders: {not_use:?}");
@@ -213,32 +228,37 @@ impl VRamEncoder {
             CodecFormat::H265 => DataFormat::H265,
             _ => return vec![],
         };
-        let Ok(displays) = crate::Display::all() else {
-            log::error!("failed to get displays");
-            return vec![];
-        };
-        if displays.is_empty() {
-            log::error!("no display found");
-            return vec![];
-        }
-        let luids = displays
-            .iter()
-            .map(|d| d.adapter_luid())
-            .collect::<Vec<_>>();
         let v: Vec<_> = get_available_config()
             .map(|c| c.e)
             .unwrap_or_default()
             .drain(..)
             .filter(|c| c.data_format == data_format)
             .collect();
-        if luids
-            .iter()
-            .all(|luid| v.iter().any(|f| Some(f.luid) == *luid))
-        {
+        if crate::hwcodec::HwRamEncoder::try_get(format).is_some() {
+            // has fallback, no need to require all adapters support
             v
         } else {
-            log::info!("not all adapters support {data_format:?}, luids = {luids:?}");
-            vec![]
+            let Ok(displays) = crate::Display::all() else {
+                log::error!("failed to get displays");
+                return vec![];
+            };
+            if displays.is_empty() {
+                log::error!("no display found");
+                return vec![];
+            }
+            let luids = displays
+                .iter()
+                .map(|d| d.adapter_luid())
+                .collect::<Vec<_>>();
+            if luids
+                .iter()
+                .all(|luid| v.iter().any(|f| Some(f.luid) == *luid))
+            {
+                v
+            } else {
+                log::info!("not all adapters support {data_format:?}, luids = {luids:?}");
+                vec![]
+            }
         }
     }
 
@@ -285,8 +305,12 @@ impl VRamEncoder {
         ENOCDE_NOT_USE.lock().unwrap().insert(display, not_use);
     }
 
-    pub fn not_use() -> bool {
-        ENOCDE_NOT_USE.lock().unwrap().iter().any(|v| *v.1)
+    pub fn set_fallback_gdi(display: usize, fallback: bool) {
+        if fallback {
+            FALLBACK_GDI_DISPLAYS.lock().unwrap().insert(display);
+        } else {
+            FALLBACK_GDI_DISPLAYS.lock().unwrap().remove(&display);
+        }
     }
 }
 
