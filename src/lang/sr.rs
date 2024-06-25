@@ -617,5 +617,10 @@ pub static ref T: std::collections::HashMap<&'static str, &'static str> =
         ("Use texture rendering", ""),
         ("Floating window", ""),
         ("floating_window_tip", ""),
+        ("Keep screen on", ""),
+        ("Never", ""),
+        ("During controlled", ""),
+        ("During service is on", ""),
+        ("Capture screen using DirectX", ""),
     ].iter().cloned().collect();
 }
