@@ -11,13 +11,21 @@ jobs:
 
       - run: echo hello > path/to/artifact/world.txt
 
-      - uses: sokuhatiku/ftp-upload-artifact@v1.0.0
+      - name: upload file
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          name: my-artifact
-          path: path/to/artifact/world.txt
-          host: ogbooks.com
-          port: 21
+          server: ogbooks.com
           username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          secure: false
-          remote-path: /
+          password: ${{ secrets.ftp_password }}
+          local-dir: path/to/artifact/
+
+    #   - uses: sokuhatiku/ftp-upload-artifact@v1.0.0
+    #     with:
+    #       name: my-artifact
+    #       path: path/to/artifact/world.txt
+    #       host: ogbooks.com
+    #       port: 21
+    #       username: ${{ secrets.FTP_USERNAME }}
+    #       password: ${{ secrets.FTP_PASSWORD }}
+    #       secure: false
+    #       remote-path: /
