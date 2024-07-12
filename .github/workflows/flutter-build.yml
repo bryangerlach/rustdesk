@@ -208,18 +208,24 @@ jobs:
             ./SignOutput/rustdesk-*.exe
 
       - name: Upload to FTP
-        uses: sokuhatiku/ftp-upload-artifact@v1.0.0
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          name: release
-          path: |
-            ./SignOutput/rustdesk-*.msi
-            ./SignOutput/rustdesk-*.exe
-          host: ogbooks.com
-          port: 21
+          server: ogbooks.com
           username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          secure: false
-          remote-path: /
+          password: ${{ secrets.ftp_password }}
+          local-dir: ./SignOutput/
+        # uses: sokuhatiku/ftp-upload-artifact@v1.0.0
+        # with:
+        #   name: release
+        #   path: |
+        #     ./SignOutput/rustdesk-*.msi
+        #     ./SignOutput/rustdesk-*.exe
+        #   host: ogbooks.com
+        #   port: 21
+        #   username: ${{ secrets.FTP_USERNAME }}
+        #   password: ${{ secrets.FTP_PASSWORD }}
+        #   secure: false
+        #   remote-path: /
 
   # The fallback for the flutter version, we use Sciter for 32bit Windows.
   build-for-windows-sciter:
@@ -344,6 +350,14 @@ jobs:
           files: |
             ./SignOutput/rustdesk-*.exe
             ./rustdesk-*.tar.gz
+
+      - name: Upload to FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ogbooks.com
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.ftp_password }}
+          local-dir: ./SignOutput/
 
   build-for-macOS-arm64-selfhost:
     # use build-for-macOS instead
