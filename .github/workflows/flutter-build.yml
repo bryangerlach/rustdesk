@@ -208,7 +208,7 @@ jobs:
             ./SignOutput/rustdesk-*.exe
 
       - name: Upload to FTP
-        uses: sokuhatiku/ftp-upload-artifact@v1
+        uses: sokuhatiku/ftp-upload-artifact@v1.0.0
         with:
           name: release
           path: |
