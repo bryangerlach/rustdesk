@@ -1,0 +1,23 @@
+on:
+  workflow_dispatch:
+    
+jobs:
+  steps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Upload to FTP
+        uses: actions/checkout@v3
+      - run: mkdir -p path/to/artifact
+
+      - run: echo hello > path/to/artifact/world.txt
+
+      - uses: sokuhatiku/ftp-upload-artifact@v1.0.0
+        with:
+          name: my-artifact
+          path: path/to/artifact/world.txt
+          host: ogbooks.com
+          port: 21
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          secure: false
+          remote-path: /
