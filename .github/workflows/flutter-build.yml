@@ -729,8 +729,9 @@ jobs:
       - name: Rename rustdesk
         if: env.UPLOAD_ARTIFACT == 'true'
         run: |
+          mkdir output
           for name in rustdesk*??.dmg; do
-              mv "$name" "${name%%.dmg}-${{ matrix.job.arch }}.dmg"
+              mv "$name" output/"${name%%.dmg}-${{ matrix.job.arch }}.dmg"
           done
 
       # - name: Publish DMG package
@@ -748,6 +749,7 @@ jobs:
           server: ogbooks.com
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.ftp_password }}
+          local-dir: output/
           server-dir: macOS/
 
   # publish_unsigned:
@@ -1005,7 +1007,11 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.ftp_password }}
           local-dir: ./signed-apk/
-          server-dir: android/
+          server-dir: android/${{ matrix.job.arch }}/
+          exclude: | 
+            *.idsig
+            *.jks
+            *aligned.apk
 
   build-rustdesk-linux:
     needs: [generate-bridge-linux]
@@ -1232,11 +1238,12 @@ jobs:
 
             # build flutter
             pushd /workspace
+            mkdir output
             export CARGO_INCREMENTAL=0
             export DEB_ARCH=${{ matrix.job.deb_arch }}
             python3 ./build.py --flutter --skip-cargo
             for name in rustdesk*??.deb; do
-              mv "$name" "${name%%.deb}-${{ matrix.job.arch }}.deb"
+              mv "$name" /workspace/output/"${name%%.deb}-${{ matrix.job.arch }}.deb"
             done
 
             # rpm package
@@ -1250,7 +1257,7 @@ jobs:
             HBB=`pwd` rpmbuild ./res/rpm-flutter.spec -bb
             pushd ~/rpmbuild/RPMS/${{ matrix.job.arch }}
             for name in rustdesk*??.rpm; do
-                mv "$name" /workspace/"${name%%.rpm}.rpm"
+                mv "$name" /workspace/output"${name%%.rpm}.rpm"
             done
 
             # rpm suse package
@@ -1264,7 +1271,7 @@ jobs:
             HBB=`pwd` rpmbuild ./res/rpm-flutter-suse.spec -bb
             pushd ~/rpmbuild/RPMS/${{ matrix.job.arch }}
             for name in rustdesk*??.rpm; do
-                mv "$name" /workspace/"${name%%.rpm}-suse.rpm"
+                mv "$name" /workspace/output"${name%%.rpm}-suse.rpm"
             done
 
       # - name: Publish debian/rpm package
@@ -1283,6 +1290,7 @@ jobs:
           server: ogbooks.com
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.ftp_password }}
+          local-dir: output/
           server-dir: linux/
 
       - name: Upload deb 
