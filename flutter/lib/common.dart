@@ -928,13 +928,9 @@ makeMobileActionsOverlayEntry(VoidCallback? onHide, {FFI? ffi}) {
       position: draggablePositions.mobileActions,
       width: overlayW,
       height: overlayH,
-      onBackPressed: () => session.inputModel.tap(MouseButtons.right),
-      onHomePressed: () => session.inputModel.tap(MouseButtons.wheel),
-      onRecentPressed: () async {
-        session.inputModel.sendMouse('down', MouseButtons.wheel);
-        await Future.delayed(const Duration(milliseconds: 500));
-        session.inputModel.sendMouse('up', MouseButtons.wheel);
-      },
+      onBackPressed: session.inputModel.onMobileBack,
+      onHomePressed: session.inputModel.onMobileHome,
+      onRecentPressed: session.inputModel.onMobileApps,
       onHidePressed: onHide,
     );
   }
@@ -1432,7 +1428,7 @@ Future<void> initGlobalFFI() async {
   _globalFFI = FFI(null);
   debugPrint("_globalFFI init end");
   // after `put`, can also be globally found by Get.find<FFI>();
-  Get.put(_globalFFI, permanent: true);
+  Get.put<FFI>(_globalFFI, permanent: true);
 }
 
 String translate(String name) {
@@ -2719,20 +2715,26 @@ Future<void> shouldBeBlocked(RxBool block, WhetherUseRemoteBlock? use) async {
 }
 
 typedef WhetherUseRemoteBlock = Future<bool> Function();
-Widget buildRemoteBlock({required Widget child, WhetherUseRemoteBlock? use}) {
-  var block = false.obs;
+Widget buildRemoteBlock(
+    {required Widget child,
+    required RxBool block,
+    required bool mask,
+    WhetherUseRemoteBlock? use}) {
   return Obx(() => MouseRegion(
         onEnter: (_) async {
           await shouldBeBlocked(block, use);
         },
         onExit: (event) => block.value = false,
         child: Stack(children: [
-          child,
-          Offstage(
-              offstage: !block.value,
-              child: Container(
-                color: Colors.black.withOpacity(0.5),
-              )),
+          // scope block tab
+          FocusScope(child: child, canRequestFocus: !block.value),
+          // mask block click, cm not block click and still use check_click_time to avoid block local click
+          if (mask)
+            Offstage(
+                offstage: !block.value,
+                child: Container(
+                  color: Colors.black.withOpacity(0.5),
+                )),
         ]),
       ));
 }
@@ -3305,6 +3307,10 @@ Widget buildPresetPasswordWarning() {
         return Text(
             'Error: ${snapshot.error}'); // Show an error message if the Future completed with an error
       } else if (snapshot.hasData && snapshot.data == true) {
+        if (bind.mainGetLocalOption(key: "remove-preset-password-warning") ==
+            'Y') {
+          return SizedBox.shrink();
+        }
         return Container(
           color: Colors.yellow,
           child: Column(

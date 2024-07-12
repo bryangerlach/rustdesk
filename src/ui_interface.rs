@@ -904,8 +904,7 @@ pub fn get_api_server() -> String {
 #[inline]
 pub fn has_hwcodec() -> bool {
     // Has real hardware codec using gpu
-    (cfg!(feature = "hwcodec") && (cfg!(windows) || cfg!(target_os = "linux")))
-        || cfg!(feature = "mediacodec")
+    (cfg!(feature = "hwcodec") && cfg!(not(target_os = "ios"))) || cfg!(feature = "mediacodec")
 }
 
 #[inline]
@@ -1392,9 +1391,23 @@ pub fn verify2fa(code: String) -> bool {
     res
 }
 
+pub fn has_valid_bot() -> bool {
+    crate::auth_2fa::TelegramBot::get().map_or(false, |bot| bot.is_some())
+}
+
+pub fn verify_bot(token: String) -> String {
+    match crate::auth_2fa::get_chatid_telegram(&token) {
+        Err(err) => err.to_string(),
+        Ok(None) => {
+            "To activate the bot, simply send a message beginning with a forward slash (\"/\") like \"/hello\" to its chat.".to_owned()
+        }
+        _ => "".to_owned(),
+    }
+}
+
 pub fn check_hwcodec() {
     #[cfg(feature = "hwcodec")]
-    #[cfg(any(target_os = "windows", target_os = "linux"))]
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
     {
         use std::sync::Once;
         static ONCE: Once = Once::new();
