@@ -1291,7 +1291,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.ftp_password }}
           local-dir: output/
-          server-dir: linux/
+          server-dir: linux/${{ matrix.job.arch }}/
 
       - name: Upload deb 
         uses: actions/upload-artifact@master
