@@ -1282,6 +1282,7 @@ jobs:
             # build flutter
             pushd /workspace
             mkdir output
+            chmod 777 output -R
             export CARGO_INCREMENTAL=0
             export DEB_ARCH=${{ matrix.job.deb_arch }}
             python3 ./build.py --flutter --skip-cargo
@@ -1300,7 +1301,7 @@ jobs:
             HBB=`pwd` rpmbuild ./res/rpm-flutter.spec -bb
             pushd ~/rpmbuild/RPMS/${{ matrix.job.arch }}
             for name in rustdesk*??.rpm; do
-                mv "$name" /workspace/output"${name%%.rpm}.rpm"
+                mv "$name" /workspace/output/"${name%%.rpm}.rpm"
             done
 
             # rpm suse package
@@ -1314,7 +1315,7 @@ jobs:
             HBB=`pwd` rpmbuild ./res/rpm-flutter-suse.spec -bb
             pushd ~/rpmbuild/RPMS/${{ matrix.job.arch }}
             for name in rustdesk*??.rpm; do
-                mv "$name" /workspace/output"${name%%.rpm}-suse.rpm"
+                mv "$name" /workspace/output/"${name%%.rpm}-suse.rpm"
             done
 
       # - name: Publish debian/rpm package
