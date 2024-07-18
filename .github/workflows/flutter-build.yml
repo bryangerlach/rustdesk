@@ -234,9 +234,9 @@ jobs:
       - name: Upload to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ogbooks.com
+          server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.ftp_password }}
+          password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./SignOutput/
 
   # The fallback for the flutter version, we use Sciter for 32bit Windows.
@@ -387,9 +387,9 @@ jobs:
       - name: Upload to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ogbooks.com
+          server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.ftp_password }}
+          password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./SignOutput/
           server-dir: sciter/
 
@@ -468,9 +468,9 @@ jobs:
   #     - name: Upload to FTP
   #       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
   #       with:
-  #         server: ogbooks.com
+  #         server: ${{ secrets.FTP_SERVER }}
   #         username: ${{ secrets.FTP_USERNAME }}
-  #         password: ${{ secrets.ftp_password }}
+  #         password: ${{ secrets.FTP_PASSWORD }}
   #         local-dir: 
   #         server-dir: macOS/
 
@@ -789,9 +789,9 @@ jobs:
       - name: Upload to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ogbooks.com
+          server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.ftp_password }}
+          password: ${{ secrets.FTP_PASSWORD }}
           local-dir: output/
           server-dir: macOS/
 
@@ -1046,9 +1046,9 @@ jobs:
       - name: Upload to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ogbooks.com
+          server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.ftp_password }}
+          password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./signed-apk/
           server-dir: android/${{ matrix.job.arch }}/
           exclude: | 
@@ -1331,9 +1331,9 @@ jobs:
       - name: Upload to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ogbooks.com
+          server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.ftp_password }}
+          password: ${{ secrets.FTP_PASSWORD }}
           local-dir: output/
           server-dir: linux/${{ matrix.job.arch }}/
 
