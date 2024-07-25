@@ -78,7 +78,8 @@ class DesktopSettingPage extends StatefulWidget {
   DesktopSettingPage({Key? key, required this.initialTabkey}) : super(key: key);
 
   @override
-  State<DesktopSettingPage> createState() => _DesktopSettingPageState();
+  State<DesktopSettingPage> createState() =>
+      _DesktopSettingPageState(initialTabkey);
 
   static void switch2page(SettingsTabKey page) {
     try {
@@ -111,10 +112,8 @@ class _DesktopSettingPageState extends State<DesktopSettingPage>
   @override
   bool get wantKeepAlive => true;
 
-  @override
-  void initState() {
-    super.initState();
-    var initialIndex = DesktopSettingPage.tabKeys.indexOf(widget.initialTabkey);
+  _DesktopSettingPageState(SettingsTabKey initialTabkey) {
+    var initialIndex = DesktopSettingPage.tabKeys.indexOf(initialTabkey);
     if (initialIndex == -1) {
       initialIndex = 0;
     }
@@ -1806,7 +1805,7 @@ class _AboutState extends State<_About> {
           child: SingleChildScrollView(
             controller: scrollController,
             physics: DraggableNeverScrollableScrollPhysics(),
-            child: _Card(title: '${translate('About')} RustDesk', children: [
+            child: _Card(title: translate('About RustDesk'), children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

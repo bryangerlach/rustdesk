@@ -31,7 +31,6 @@ import 'mobile/pages/file_manager_page.dart';
 import 'mobile/pages/remote_page.dart';
 import 'desktop/pages/remote_page.dart' as desktop_remote;
 import 'package:flutter_hbb/desktop/widgets/remote_toolbar.dart';
-import 'models/input_model.dart';
 import 'models/model.dart';
 import 'models/platform_model.dart';
 
@@ -647,8 +646,12 @@ String formatDurationToTime(Duration duration) {
 
 closeConnection({String? id}) {
   if (isAndroid || isIOS) {
-    gFFI.chatModel.hideChatOverlay();
-    Navigator.popUntil(globalKey.currentContext!, ModalRoute.withName("/"));
+    () async {
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+          overlays: SystemUiOverlay.values);
+      gFFI.chatModel.hideChatOverlay();
+      Navigator.popUntil(globalKey.currentContext!, ModalRoute.withName("/"));
+    }();
   } else {
     if (isWeb) {
       Navigator.popUntil(globalKey.currentContext!, ModalRoute.withName("/"));
@@ -2935,6 +2938,16 @@ openMonitorInTheSameTab(int i, FFI ffi, PeerInfo pi,
   final displays = i == kAllDisplayValue
       ? List.generate(pi.displays.length, (index) => index)
       : [i];
+  // Try clear image model before switching from all displays
+  // 1. The remote side has multiple displays.
+  // 2. Do not use texture render.
+  // 3. Connect to Display 1.
+  // 4. Switch to multi-displays `kAllDisplayValue`
+  // 5. Switch to Display 2.
+  // Then the remote page will display last picture of Display 1 at the beginning.
+  if (pi.forceTextureRender && i != kAllDisplayValue) {
+    ffi.imageModel.clearImage();
+  }
   bind.sessionSwitchDisplay(
     isDesktop: isDesktop,
     sessionId: ffi.sessionId,
@@ -2968,11 +2981,15 @@ openMonitorInNewTabOrWindow(int i, String peerId, PeerInfo pi,
       kMainWindowId, kWindowEventOpenMonitorSession, jsonEncode(args));
 }
 
-setNewConnectWindowFrame(
-    int windowId, String peerId, int? display, Rect? screenRect) async {
+setNewConnectWindowFrame(int windowId, String peerId, int preSessionCount,
+    int? display, Rect? screenRect) async {
   if (screenRect == null) {
-    await restoreWindowPosition(WindowType.RemoteDesktop,
-        windowId: windowId, display: display, peerId: peerId);
+    // Do not restore window position to new connection if there's a pre-session.
+    // https://github.com/rustdesk/rustdesk/discussions/8825
+    if (preSessionCount == 0) {
+      await restoreWindowPosition(WindowType.RemoteDesktop,
+          windowId: windowId, display: display, peerId: peerId);
+    }
   } else {
     await tryMoveToScreenAndSetFullscreen(screenRect);
   }
@@ -3316,6 +3333,42 @@ bool isInHomePage() {
   return controller.state.value.selected == 0;
 }
 
+Widget _buildPresetPasswordWarning() {
+  if (bind.mainGetBuildinOption(key: kOptionRemovePresetPasswordWarning) !=
+      'N') {
+    return SizedBox.shrink();
+  }
+  return Container(
+    color: Colors.yellow,
+    child: Column(
+      children: [
+        Align(
+            child: Text(
+          translate("Security Alert"),
+          style: TextStyle(
+            color: Colors.red,
+            fontSize:
+                18, // https://github.com/rustdesk/rustdesk-server-pro/issues/261
+            fontWeight: FontWeight.bold,
+          ),
+        )).paddingOnly(bottom: 8),
+        Text(
+          translate("preset_password_warning"),
+          style: TextStyle(color: Colors.red),
+        )
+      ],
+    ).paddingAll(8),
+  ); // Show a warning message if the Future completed with true
+}
+
+Widget buildPresetPasswordWarningMobile() {
+  if (bind.isPresetPasswordMobileOnly()) {
+    return _buildPresetPasswordWarning();
+  } else {
+    return SizedBox.shrink();
+  }
+}
+
 Widget buildPresetPasswordWarning() {
   return FutureBuilder<bool>(
     future: bind.isPresetPassword(),
@@ -3326,32 +3379,7 @@ Widget buildPresetPasswordWarning() {
         return Text(
             'Error: ${snapshot.error}'); // Show an error message if the Future completed with an error
       } else if (snapshot.hasData && snapshot.data == true) {
-        if (bind.mainGetBuildinOption(
-                key: kOptionRemovePresetPasswordWarning) !=
-            'N') {
-          return SizedBox.shrink();
-        }
-        return Container(
-          color: Colors.yellow,
-          child: Column(
-            children: [
-              Align(
-                  child: Text(
-                translate("Security Alert"),
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize:
-                      18, // https://github.com/rustdesk/rustdesk-server-pro/issues/261
-                  fontWeight: FontWeight.bold,
-                ),
-              )).paddingOnly(bottom: 8),
-              Text(
-                translate("preset_password_warning"),
-                style: TextStyle(color: Colors.red),
-              )
-            ],
-          ).paddingAll(8),
-        ); // Show a warning message if the Future completed with true
+        return _buildPresetPasswordWarning();
       } else {
         return SizedBox
             .shrink(); // Show nothing if the Future completed with false or null
@@ -3423,7 +3451,12 @@ setResizable(bool resizable) {
 
 isOptionFixed(String key) => bind.mainIsOptionFixed(key: key);
 
-final isCustomClient = bind.isCustomClient();
+bool? _isCustomClient;
+bool get isCustomClient {
+  _isCustomClient ??= bind.isCustomClient();
+  return _isCustomClient!;
+}
+
 get defaultOptionLang => isCustomClient ? 'default' : '';
 get defaultOptionTheme => isCustomClient ? 'system' : '';
 get defaultOptionYes => isCustomClient ? 'Y' : '';
