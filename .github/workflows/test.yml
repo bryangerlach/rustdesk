@@ -71,13 +71,13 @@ jobs:
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      # - name: Checkout source code
+      #   uses: actions/checkout@v4
 
-      - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1
-        with:
-          version: ${{ env.LLVM_VERSION }}
+      # - name: Install LLVM and Clang
+      #   uses: KyleMayes/install-llvm-action@v1
+      #   with:
+      #     version: ${{ env.LLVM_VERSION }}
 
       # - name: Install flutter
       #   uses: subosito/flutter-action@v2.12.0 #https://github.com/subosito/flutter-action/issues/277
@@ -86,16 +86,16 @@ jobs:
       #     flutter-version: ${{ env.FLUTTER_VERSION }}
       #     cache: true
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@v1
-        with:
-          toolchain: ${{ env.SCITER_RUST_VERSION }}
-          targets: ${{ matrix.job.target }}
-          components: "rustfmt"
+      # - name: Install Rust toolchain
+      #   uses: dtolnay/rust-toolchain@v1
+      #   with:
+      #     toolchain: ${{ env.SCITER_RUST_VERSION }}
+      #     targets: ${{ matrix.job.target }}
+      #     components: "rustfmt"
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: ${{ matrix.job.os }}
+      # - uses: Swatinem/rust-cache@v2
+      #   with:
+      #     prefix-key: ${{ matrix.job.os }}
 
       - name: Install flutter rust bridge deps
         run: |
@@ -104,31 +104,31 @@ jobs:
           Push-Location flutter ; flutter pub get ; Pop-Location
           ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart
 
-      - name: Setup vcpkg with Github Actions binary cache
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgDirectory: C:\vcpkg
-          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
-          doNotCache: false
+      # - name: Setup vcpkg with Github Actions binary cache
+      #   uses: lukka/run-vcpkg@v11
+      #   with:
+      #     vcpkgDirectory: C:\vcpkg
+      #     vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+      #     doNotCache: false
 
-      - name: Install vcpkg dependencies
-        env:
-          VCPKG_DEFAULT_HOST_TRIPLET: ${{ matrix.job.vcpkg-triplet }}
-        run: |
-          if ! $VCPKG_ROOT/vcpkg \
-            install \
-            --triplet ${{ matrix.job.vcpkg-triplet }} \
-            --x-install-root="$VCPKG_ROOT/installed"; then
-            find "${VCPKG_ROOT}/" -name "*.log" | while read -r _1; do
-              echo "$_1:"
-              echo "======"
-              cat "$_1"
-              echo "======"
-              echo ""
-            done
-            exit 1
-          fi
-        shell: bash
+      # - name: Install vcpkg dependencies
+      #   env:
+      #     VCPKG_DEFAULT_HOST_TRIPLET: ${{ matrix.job.vcpkg-triplet }}
+      #   run: |
+      #     if ! $VCPKG_ROOT/vcpkg \
+      #       install \
+      #       --triplet ${{ matrix.job.vcpkg-triplet }} \
+      #       --x-install-root="$VCPKG_ROOT/installed"; then
+      #       find "${VCPKG_ROOT}/" -name "*.log" | while read -r _1; do
+      #         echo "$_1:"
+      #         echo "======"
+      #         cat "$_1"
+      #         echo "======"
+      #         echo ""
+      #       done
+      #       exit 1
+      #     fi
+      #   shell: bash
 
       - name: Build rustdesk
         run: |
