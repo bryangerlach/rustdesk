@@ -226,7 +226,7 @@ jobs:
           popd
           mkdir -p ./SignOutput
           cp ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-latest.exe
-          mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.exe
+          mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/${{ inputs.filename }}.exe
 
       # - name: Add MSBuild to PATH
       #   uses: microsoft/setup-msbuild@v2
