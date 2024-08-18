@@ -207,8 +207,8 @@ jobs:
       - name: Create custom.txt file
         shell: bash
         run: |
-          if [${{ env.DIRECTION }}=='Incoming']; then echo -n "eyJjb25uLXR5cGUiOiJpbmNvbWluZyJ9" | cat > ./rustdesk/custom.txt
-          if [${{ env.DIRECTION }}=='Outgoing']; then echo -n "eyJjb25uLXR5cGUiOiJvdXRnb2luZyJ9" | cat > ./rustdesk/custom.txt
+          if [ "${{ env.DIRECTION }}" = "Incoming" ]; then echo -n "eyJjb25uLXR5cGUiOiJpbmNvbWluZyJ9" | cat > ./rustdesk/custom.txt; fi
+          if [ "${{ env.DIRECTION }}" = "Outgoing" ]; then echo -n "eyJjb25uLXR5cGUiOiJvdXRnb2luZyJ9" | cat > ./rustdesk/custom.txt; fi
 
       - name: Build self-extracted executable
         shell: bash
