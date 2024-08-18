@@ -1,9 +1,28 @@
 name: Test
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+run-name: testing generator
 on: 
-  repository_dispatch:
-    types: [start-example-workflow]
   workflow_dispatch:
+    inputs:
+      server:
+        description: 'Rendezvous Server'
+        required: true
+        default: ''
+        type: string
+      key:
+        description: 'Public Key'
+        required: true
+        default: ''
+        type: string
+      direction:
+        description: "Incoming/Outgoing/Both"
+        required: true
+        default: 'Both'
+        type: choice
+        options:
+        - Incoming Only
+        - Outgoing Only
+        - Both
+
 
 env:
   SCITER_RUST_VERSION: "1.75" # https://github.com/rustdesk/rustdesk/discussions/7503, also 1.78 has ABI change which causes our sciter version not working, https://blog.rust-lang.org/2024/03/30/i128-layout-update.html
@@ -27,8 +46,9 @@ env:
   ANDROID_SIGNING_KEY: "${{ secrets.ANDROID_SIGNING_KEY }}"
   MACOS_P12_BASE64: "${{ secrets.MACOS_P12_BASE64 }}"
   # To make a custom build with your own servers set the below secret values
-  RS_PUB_KEY: "${{ secrets.RS_PUB_KEY }}"
-  RENDEZVOUS_SERVER: "${{ secrets.RENDEZVOUS_SERVER }}"
+  RS_PUB_KEY: "${{ inputs.key }}"
+  RENDEZVOUS_SERVER: "${{ inputs.server }}"
+  DIRECTION: "${{ inputs.direction }}"
   API_SERVER: "${{ secrets.API_SERVER }}"
   UPLOAD_ARTIFACT: 'true'
   SIGN_BASE_URL: "${{ secrets.SIGN_BASE_URL }}"
@@ -188,6 +208,12 @@ jobs:
           folder: './rustdesk/'
           recursive: true
 
+      - name: Create custom.txt file
+        shell: bash
+        run: |
+          if [${{ env.DIRECTION }}=='Incoming']; then echo -n "eyJjb25uLXR5cGUiOiJpbmNvbWluZyJ9" | cat > ./rustdesk/custom.txt
+          if [${{ env.DIRECTION }}=='Outgoing']; then echo -n "eyJjb25uLXR5cGUiOiJvdXRnb2luZyJ9" | cat > ./rustdesk/custom.txt
+
       - name: Build self-extracted executable
         shell: bash
         if: env.UPLOAD_ARTIFACT == 'true'
@@ -245,7 +271,8 @@ jobs:
       - name: Upload to FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
+          server: ${{ secrets.GEN_FTP_SERVER }}
+          username: ${{ secrets.GEN_FTP_USER }}
+          password: ${{ secrets.GEN_FTP_PASSWORD }}
           local-dir: ./SignOutput/
+          server-dir: /root/rdgen/exe/
