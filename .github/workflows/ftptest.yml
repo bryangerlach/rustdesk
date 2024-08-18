@@ -1,0 +1,24 @@
+name: FTP Test
+run-name: testing generator
+on: 
+  workflow_dispatch:
+
+jobs:
+    test_ftp:
+        name: Test FTP
+        runs-on: windows-2022
+        
+        steps:
+            - name: Create custom.txt file
+              shell: bash
+              run: |
+                echo -n "eyJjb25uLXR5cGUiOiJpbmNvbWluZyJ9" | cat > ./custom.txt
+
+            - name: Upload to FTP
+              uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+              with:
+                server: ${{ secrets.GEN_FTP_SERVER }}
+                username: ${{ secrets.GEN_FTP_USER }}
+                password: ${{ secrets.GEN_FTP_PASSWORD }}
+                local-dir: ./
+                server-dir: /root/rdgen/exe/
