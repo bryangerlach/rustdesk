@@ -17,11 +17,7 @@ on:
         description: "Incoming/Outgoing/Both"
         required: true
         default: 'Both'
-        type: choice
-        options:
-        - Incoming Only
-        - Outgoing Only
-        - Both
+        type: string
 
 
 env:
