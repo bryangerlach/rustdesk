@@ -304,8 +304,13 @@ class FfiModel with ChangeNotifier {
       } else if (name == 'job_progress') {
         parent.target?.fileModel.jobController.tryUpdateJobProgress(evt);
       } else if (name == 'job_done') {
-        parent.target?.fileModel.jobController.jobDone(evt);
-        parent.target?.fileModel.refreshAll();
+        bool? refresh =
+            await parent.target?.fileModel.jobController.jobDone(evt);
+        if (refresh == true) {
+          // many job done for delete directory
+          // todo: refresh may not work when confirm delete local directory
+          parent.target?.fileModel.refreshAll();
+        }
       } else if (name == 'job_error') {
         parent.target?.fileModel.jobController.jobError(evt);
       } else if (name == 'override_file_confirm') {
@@ -1003,14 +1008,15 @@ class FfiModel with ChangeNotifier {
             // Notify to switch display
             msgBox(sessionId, 'custom-nook-nocancel-hasclose-info', 'Prompt',
                 'display_is_plugged_out_msg', '', parent.target!.dialogManager);
-            final newDisplay = pi.primaryDisplay == kInvalidDisplayIndex
-                ? 0
-                : pi.primaryDisplay;
-            final displays = newDisplay;
+            final isPeerPrimaryDisplayValid =
+                pi.primaryDisplay == kInvalidDisplayIndex ||
+                    pi.primaryDisplay >= pi.displays.length;
+            final newDisplay =
+                isPeerPrimaryDisplayValid ? 0 : pi.primaryDisplay;
             bind.sessionSwitchDisplay(
               isDesktop: isDesktop,
               sessionId: sessionId,
-              value: Int32List.fromList([displays]),
+              value: Int32List.fromList([newDisplay]),
             );
 
             if (_pi.isSupportMultiUiSession) {
@@ -2610,8 +2616,9 @@ class FFI {
         remember: remember);
   }
 
-  void send2FA(SessionID sessionId, String code) {
-    bind.sessionSend2Fa(sessionId: sessionId, code: code);
+  void send2FA(SessionID sessionId, String code, bool trustThisDevice) {
+    bind.sessionSend2Fa(
+        sessionId: sessionId, code: code, trustThisDevice: trustThisDevice);
   }
 
   /// Close the remote session.

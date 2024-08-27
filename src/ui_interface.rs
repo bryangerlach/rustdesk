@@ -427,6 +427,14 @@ pub fn install_path() -> String {
 }
 
 #[inline]
+pub fn install_options() -> String {
+    #[cfg(windows)]
+    return crate::platform::windows::get_install_options();
+    #[cfg(not(windows))]
+    return "{}".to_owned();
+}
+
+#[inline]
 pub fn get_socks() -> Vec<String> {
     #[cfg(not(any(target_os = "android", target_os = "ios")))]
     let s = ipc::get_socks();
@@ -1462,4 +1470,29 @@ pub fn set_unlock_pin(pin: String) -> String {
         Ok(_) => String::default(),
         Err(err) => err.to_string(),
     }
+}
+
+#[cfg(feature = "flutter")]
+pub fn get_trusted_devices() -> String {
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    return Config::get_trusted_devices_json();
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    return ipc::get_trusted_devices();
+}
+
+#[cfg(feature = "flutter")]
+pub fn remove_trusted_devices(json: &str) {
+    let hwids = serde_json::from_str::<Vec<Bytes>>(json).unwrap_or_default();
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    Config::remove_trusted_devices(&hwids);
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    ipc::remove_trusted_devices(hwids);
+}
+
+#[cfg(feature = "flutter")]
+pub fn clear_trusted_devices() {
+    #[cfg(any(target_os = "android", target_os = "ios"))]
+    Config::clear_trusted_devices();
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    ipc::clear_trusted_devices();
 }
