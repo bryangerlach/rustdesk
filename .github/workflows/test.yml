@@ -92,70 +92,70 @@ jobs:
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      # - name: Checkout source code
+      #   uses: actions/checkout@v4
 
-      - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1
-        with:
-          version: ${{ env.LLVM_VERSION }}
+      # - name: Install LLVM and Clang
+      #   uses: KyleMayes/install-llvm-action@v1
+      #   with:
+      #     version: ${{ env.LLVM_VERSION }}
 
-      - name: Install flutter
-        uses: subosito/flutter-action@v2.12.0 #https://github.com/subosito/flutter-action/issues/277
-        with:
-          channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
+      # - name: Install flutter
+      #   uses: subosito/flutter-action@v2.12.0 #https://github.com/subosito/flutter-action/issues/277
+      #   with:
+      #     channel: "stable"
+      #     flutter-version: ${{ env.FLUTTER_VERSION }}
+      #     cache: true
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@v1
-        with:
-          toolchain: ${{ env.SCITER_RUST_VERSION }}
-          targets: ${{ matrix.job.target }}
-          components: "rustfmt"
+      # - name: Install Rust toolchain
+      #   uses: dtolnay/rust-toolchain@v1
+      #   with:
+      #     toolchain: ${{ env.SCITER_RUST_VERSION }}
+      #     targets: ${{ matrix.job.target }}
+      #     components: "rustfmt"
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: ${{ matrix.job.os }}
+      # - uses: Swatinem/rust-cache@v2
+      #   with:
+      #     prefix-key: ${{ matrix.job.os }}
 
-      - name: Install flutter rust bridge deps
-        run: |
-          git config --global core.longpaths true
-          cargo install flutter_rust_bridge_codegen --version ${{ env.FLUTTER_RUST_BRIDGE_VERSION }} --features "uuid"
-          Push-Location flutter ; flutter pub get ; Pop-Location
-          ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart
+      # - name: Install flutter rust bridge deps
+      #   run: |
+      #     git config --global core.longpaths true
+      #     cargo install flutter_rust_bridge_codegen --version ${{ env.FLUTTER_RUST_BRIDGE_VERSION }} --features "uuid"
+      #     Push-Location flutter ; flutter pub get ; Pop-Location
+      #     ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart
 
-      - name: Setup vcpkg with Github Actions binary cache
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgDirectory: C:\vcpkg
-          vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
-          doNotCache: false
+      # - name: Setup vcpkg with Github Actions binary cache
+      #   uses: lukka/run-vcpkg@v11
+      #   with:
+      #     vcpkgDirectory: C:\vcpkg
+      #     vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
+      #     doNotCache: false
 
-      - name: Install vcpkg dependencies
-        env:
-          VCPKG_DEFAULT_HOST_TRIPLET: ${{ matrix.job.vcpkg-triplet }}
-        run: |
-          if ! $VCPKG_ROOT/vcpkg \
-            install \
-            --triplet ${{ matrix.job.vcpkg-triplet }} \
-            --x-install-root="$VCPKG_ROOT/installed"; then
-            find "${VCPKG_ROOT}/" -name "*.log" | while read -r _1; do
-              echo "$_1:"
-              echo "======"
-              cat "$_1"
-              echo "======"
-              echo ""
-            done
-            exit 1
-          fi
-        shell: bash
+      # - name: Install vcpkg dependencies
+      #   env:
+      #     VCPKG_DEFAULT_HOST_TRIPLET: ${{ matrix.job.vcpkg-triplet }}
+      #   run: |
+      #     if ! $VCPKG_ROOT/vcpkg \
+      #       install \
+      #       --triplet ${{ matrix.job.vcpkg-triplet }} \
+      #       --x-install-root="$VCPKG_ROOT/installed"; then
+      #       find "${VCPKG_ROOT}/" -name "*.log" | while read -r _1; do
+      #         echo "$_1:"
+      #         echo "======"
+      #         cat "$_1"
+      #         echo "======"
+      #         echo ""
+      #       done
+      #       exit 1
+      #     fi
+      #   shell: bash
 
       - name: Build rustdesk
         run: |
           Invoke-WebRequest -Uri https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip -OutFile usbmmidd_v2.zip
           Expand-Archive usbmmidd_v2.zip -DestinationPath . -Force
-          python3 .\build.py --portable --hwcodec --flutter --vram --skip-portable-pack
+          python3 .\build.py --portable --flutter --vram --skip-portable-pack --feature IddDriver hwcodec
           Remove-Item -Path usbmmidd_v2\Win32 -Recurse
           Remove-Item -Path "usbmmidd_v2\deviceinstaller64.exe", "usbmmidd_v2\deviceinstaller.exe", "usbmmidd_v2\usbmmidd.bat"
           mv ./flutter/build/windows/x64/runner/Release ./rustdesk
