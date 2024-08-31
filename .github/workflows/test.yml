@@ -95,28 +95,28 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      - name: Install LLVM and Clang
-        uses: KyleMayes/install-llvm-action@v1
-        with:
-          version: ${{ env.LLVM_VERSION }}
+      # - name: Install LLVM and Clang
+      #   uses: KyleMayes/install-llvm-action@v1
+      #   with:
+      #     version: ${{ env.LLVM_VERSION }}
 
-      - name: Install flutter
-        uses: subosito/flutter-action@v2.12.0 #https://github.com/subosito/flutter-action/issues/277
-        with:
-          channel: "stable"
-          flutter-version: ${{ env.FLUTTER_VERSION }}
-          cache: true
+      # - name: Install flutter
+      #   uses: subosito/flutter-action@v2.12.0 #https://github.com/subosito/flutter-action/issues/277
+      #   with:
+      #     channel: "stable"
+      #     flutter-version: ${{ env.FLUTTER_VERSION }}
+      #     cache: true
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@v1
-        with:
-          toolchain: ${{ env.SCITER_RUST_VERSION }}
-          targets: ${{ matrix.job.target }}
-          components: "rustfmt"
+      # - name: Install Rust toolchain
+      #   uses: dtolnay/rust-toolchain@v1
+      #   with:
+      #     toolchain: ${{ env.SCITER_RUST_VERSION }}
+      #     targets: ${{ matrix.job.target }}
+      #     components: "rustfmt"
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: ${{ matrix.job.os }}
+      # - uses: Swatinem/rust-cache@v2
+      #   with:
+      #     prefix-key: ${{ matrix.job.os }}
 
       - name: Install flutter rust bridge deps
         run: |
