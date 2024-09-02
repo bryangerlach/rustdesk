@@ -56,20 +56,20 @@ env:
 
 
 jobs:
-  build-RustDeskTempTopMostWindow:
-    uses: ./.github/workflows/third-party-RustDeskTempTopMostWindow.yml
-    with:
-      upload-artifact: true
-      target: windows-2022
-      configuration: Release
-      platform: x64
-      target_version: Windows10
-    strategy:
-      fail-fast: false
+  # build-RustDeskTempTopMostWindow:
+  #   uses: ./.github/workflows/third-party-RustDeskTempTopMostWindow.yml
+  #   with:
+  #     upload-artifact: true
+  #     target: windows-2022
+  #     configuration: Release
+  #     platform: x64
+  #     target_version: Windows10
+  #   strategy:
+  #     fail-fast: false
 
   build-for-windows-flutter:
     name: Build Windows
-    needs: [build-RustDeskTempTopMostWindow]
+    #needs: [build-RustDeskTempTopMostWindow]
     runs-on: self-hosted
     strategy:
       fail-fast: false
@@ -92,8 +92,8 @@ jobs:
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
-      - name: Checkout source code
-        uses: actions/checkout@v4
+      # - name: Checkout source code
+      #   uses: actions/checkout@v4
 
       # - name: Install LLVM and Clang
       #   uses: KyleMayes/install-llvm-action@v1
