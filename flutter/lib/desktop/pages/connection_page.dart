@@ -271,7 +271,7 @@ class _ConnectionPageState extends State<ConnectionPage>
   @override
   Widget build(BuildContext context) {
     final isOutgoingOnly = bind.isOutgoingOnly();
-    if (bind.mainIsInstalled()) {
+    if (true) {
       return Column(
         children: [
           Expanded(
