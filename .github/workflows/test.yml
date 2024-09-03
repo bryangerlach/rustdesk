@@ -55,6 +55,7 @@ env:
   RS_PUB_KEY: "${{ inputs.key }}"
   RENDEZVOUS_SERVER: "${{ inputs.server }}"
   CUSTOM: "${{ inputs.direction }}"
+  UUIDFOLDER: "${{ inputs.uuid }}"
   API_SERVER: "${{ secrets.API_SERVER }}"
   UPLOAD_ARTIFACT: 'true'
   SIGN_BASE_URL: "${{ secrets.SIGN_BASE_URL }}"
@@ -290,4 +291,4 @@ jobs:
           username: ${{ secrets.GEN_FTP_USER }}
           password: ${{ secrets.GEN_FTP_PASSWORD }}
           local-dir: ./SignOutput/
-          server-dir: /root/rdgen/exe/
+          server-dir: /root/rdgen/exe/${{ env.UUIDFOLDER }}
