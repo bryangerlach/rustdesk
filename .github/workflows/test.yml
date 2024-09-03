@@ -156,9 +156,13 @@ jobs:
       #     fi
       #   shell: bash
 
-      - name: Build rustdesk
+      - name: remove old builds
+        continue-on-error: true
         run: |
           rm -r -fo ./rustdesk
+
+      - name: Build rustdesk
+        run: |
           python .\build.py --portable --flutter --skip-portable-pack
           mv ./flutter/build/windows/x64/runner/Release ./rustdesk
           
