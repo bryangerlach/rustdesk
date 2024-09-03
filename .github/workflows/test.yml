@@ -13,10 +13,10 @@ on:
         required: true
         default: ''
         type: string
-      direction:
-        description: "Incoming/Outgoing/Both"
+      custom:
+        description: "Custom JSON"
         required: true
-        default: 'Both'
+        default: ''
         type: string
       filename:
         description: "Filename"
@@ -49,7 +49,7 @@ env:
   # To make a custom build with your own servers set the below secret values
   RS_PUB_KEY: "${{ inputs.key }}"
   RENDEZVOUS_SERVER: "${{ inputs.server }}"
-  DIRECTION: "${{ inputs.direction }}"
+  CUSTOM: "${{ inputs.direction }}"
   API_SERVER: "${{ secrets.API_SERVER }}"
   UPLOAD_ARTIFACT: 'true'
   SIGN_BASE_URL: "${{ secrets.SIGN_BASE_URL }}"
@@ -215,8 +215,10 @@ jobs:
       - name: Create custom.txt file
         shell: bash
         run: |
-          if [ "${{ env.DIRECTION }}" = "Incoming" ]; then echo -n "eyJjb25uLXR5cGUiOiJpbmNvbWluZyJ9" | cat > ./rustdesk/custom.txt; fi
-          if [ "${{ env.DIRECTION }}" = "Outgoing" ]; then echo -n "eyJjb25uLXR5cGUiOiJvdXRnb2luZyJ9" | cat > ./rustdesk/custom.txt; fi
+          echo -n "${{ env.CUSTOM }}" | cat > ./rustdesk/custom.txt
+        
+        #if [ "${{ env.DIRECTION }}" = "Incoming" ]; then echo -n "eyJjb25uLXR5cGUiOiJpbmNvbWluZyJ9" | cat > ./rustdesk/custom.txt; fi
+        #if [ "${{ env.DIRECTION }}" = "Outgoing" ]; then echo -n "eyJjb25uLXR5cGUiOiJvdXRnb2luZyJ9" | cat > ./rustdesk/custom.txt; fi
 
       - name: Build self-extracted executable
         shell: bash
