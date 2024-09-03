@@ -18,6 +18,11 @@ on:
         required: true
         default: ''
         type: string
+      uuid:
+        description: "uuid of request"
+        required: true
+        default: ''
+        type: string
       filename:
         description: "Filename"
         required: true
