@@ -153,6 +153,7 @@ jobs:
 
       - name: Build rustdesk
         run: |
+          Remove-Item -Path ./flutter/build/windows/x64/runner/Release --Recurse
           python .\build.py --portable --flutter --skip-portable-pack
           mv ./flutter/build/windows/x64/runner/Release ./rustdesk
           
