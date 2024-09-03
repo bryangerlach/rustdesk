@@ -291,4 +291,4 @@ jobs:
           username: ${{ secrets.GEN_FTP_USER }}
           password: ${{ secrets.GEN_FTP_PASSWORD }}
           local-dir: ./SignOutput/
-          server-dir: /root/rdgen/exe/${{ env.UUIDFOLDER }}
+          server-dir: /root/rdgen/exe/${{ env.UUIDFOLDER }}/
