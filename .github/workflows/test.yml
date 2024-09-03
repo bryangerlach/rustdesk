@@ -153,7 +153,7 @@ jobs:
 
       - name: Build rustdesk
         run: |
-          rm -r -fo ./flutter/build/windows/x64/runner/Release
+          rm -r -fo ./rustdesk
           python .\build.py --portable --flutter --skip-portable-pack
           mv ./flutter/build/windows/x64/runner/Release ./rustdesk
           
