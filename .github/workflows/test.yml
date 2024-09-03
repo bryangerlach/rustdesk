@@ -54,7 +54,7 @@ env:
   # To make a custom build with your own servers set the below secret values
   RS_PUB_KEY: "${{ inputs.key }}"
   RENDEZVOUS_SERVER: "${{ inputs.server }}"
-  CUSTOM: "${{ inputs.direction }}"
+  CUSTOM: "${{ inputs.custom }}"
   UUIDFOLDER: "${{ inputs.uuid }}"
   API_SERVER: "${{ secrets.API_SERVER }}"
   UPLOAD_ARTIFACT: 'true'
@@ -240,7 +240,6 @@ jobs:
           python ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/rustdesk.exe
           popd
           mkdir -p ./SignOutput
-          cp ./target/release/rustdesk-portable-packer.exe ./SignOutput/rustdesk-latest.exe
           mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/${{ inputs.filename }}.exe
 
       # - name: Add MSBuild to PATH
