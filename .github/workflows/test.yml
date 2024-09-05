@@ -23,6 +23,11 @@ on:
         required: true
         default: ''
         type: string
+      iconbase64:
+        description: "icon in base64"
+        required: false
+        default: ''
+        type: string
       filename:
         description: "Filename"
         required: true
@@ -59,6 +64,7 @@ env:
   API_SERVER: "${{ secrets.API_SERVER }}"
   UPLOAD_ARTIFACT: 'true'
   SIGN_BASE_URL: "${{ secrets.SIGN_BASE_URL }}"
+  ICONBASE64: "$${{ inputs.iconbase64 }}"
 
 
 jobs:
@@ -161,7 +167,7 @@ jobs:
         continue-on-error: true
         run: |
           rm -r -fo ./rustdesk
-          
+
       - name: remove old signed folder
         continue-on-error: true
         run: |
