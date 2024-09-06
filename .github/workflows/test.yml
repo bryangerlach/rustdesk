@@ -216,7 +216,7 @@ jobs:
           ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart
           python .\build.py --portable --flutter --skip-portable-pack
           mv ./flutter/build/windows/x64/runner/Release ./rustdesk
-          mv ./rustdesk/rustdesk.exe ./rustdesk/${{ inputs.appname }}.exe
+          mv "./rustdesk/rustdesk.exe" "./rustdesk/${{ inputs.appname }}.exe"
 
       - name: icon stuff
         continue-on-error: true
@@ -294,10 +294,10 @@ jobs:
           sed -i '/dpiAware/d' res/manifest.xml
           pushd ./libs/portable
           pip3 install -r requirements.txt
-          python ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/${{ inputs.appname }}.exe
+          python ./generate.py -f ../../rustdesk/ -o . -e "../../rustdesk/${{ inputs.appname }}.exe"
           popd
           mkdir -p ./SignOutput
-          mv ./target/release/rustdesk-portable-packer.exe ./SignOutput/${{ inputs.filename }}.exe
+          mv ./target/release/rustdesk-portable-packer.exe "./SignOutput/${{ inputs.filename }}.exe"
 
       # - name: Add MSBuild to PATH
       #   uses: microsoft/setup-msbuild@v2
