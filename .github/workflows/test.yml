@@ -173,6 +173,11 @@ jobs:
         run: |
           rm -r -fo ./SignOutput
 
+      - name: remove Runner.res?
+        continue-on-error: true
+        run: |
+          rm ./flutter/build/windows/x64/runner/rustdesk.dir/Release/Runner.res
+
       - name: icon stuff
         continue-on-error: true
         shell: bash
@@ -345,6 +350,8 @@ jobs:
           rm ./res/icon.ico
           rm ./res/icon.png
           rm ./src/ui.rs
+          rm ./Cargo.toml
           mv ./res/icon_orig.ico ./res/icon.ico
           mv ./res/icon_orig.png ./res/icon.png
           mv ./src/ui.rs.bak ./src/ui.rs
+          mv ./Cargo.toml.bak ./Cargo.toml
