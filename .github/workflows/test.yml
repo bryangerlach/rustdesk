@@ -174,7 +174,7 @@ jobs:
         run: |
           mv ./res/icon.ico ./res/icon.ico.bak
           mv ./res/icon.png ./res/icon.png.bak
-          mv ./res/tray-icon.png ./res/tray-icon.png.bak
+          mv ./res/tray-icon.ico ./res/tray-icon.ico.bak
           echo "${{ inputs.iconbase64 }}" | base64 -d > ./res/icon.png
 
       - name: magick stuff
