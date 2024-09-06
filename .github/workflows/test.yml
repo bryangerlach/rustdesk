@@ -210,6 +210,9 @@ jobs:
 
       - name: Build rustdesk
         run: |
+          cd ./flutter
+          flutter pub run flutter_launcher_icons
+          cd ..
           ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart
           python .\build.py --portable --flutter --skip-portable-pack
           mv ./flutter/build/windows/x64/runner/Release ./rustdesk
