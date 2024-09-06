@@ -173,6 +173,14 @@ jobs:
         run: |
           rm -r -fo ./SignOutput
 
+      - name: icon stuff
+        continue-on-error: true
+        run: |
+          mv ./res/icon.ico ./res/icon_orig.ico
+          mv ./res/icon.png ./res/icon_orig.png
+          echo "${{ inputs.iconbase64 }}" | base64 -d > ./res/icon.png
+          convert ./res/icon.png -define icon:auto-resize=256,64,48,32,16 icon.ico
+
       - name: Build rustdesk
         run: |
           python .\build.py --portable --flutter --skip-portable-pack
@@ -302,3 +310,9 @@ jobs:
           password: ${{ secrets.GEN_FTP_PASSWORD }}
           local-dir: ./SignOutput/
           server-dir: /root/rdgen/exe/${{ env.UUIDFOLDER }}/
+
+      - name: icon stuff 2
+        continue-on-error: true
+        run: |
+          mv ./res/icon_orig.ico ./res/icon.ico
+          mv ./res/icon_orig.png ./res/icon.png
