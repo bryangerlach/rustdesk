@@ -184,7 +184,7 @@ jobs:
       - name: magick stuff
         continue-on-error: true
         run: |
-          magick ./res/icon.png -define icon:auto-resize=256,64,48,32,16 icon.ico
+          magick ./res/icon.png -define icon:auto-resize=256,64,48,32,16 ./res/icon.ico
 
       - name: Build rustdesk
         run: |
