@@ -182,8 +182,8 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          mv ./res/icon.ico ./res/icon_orig.ico
-          mv ./res/icon.png ./res/icon_orig.png
+          mv ./res/icon.ico ./res/icon.ico.bak
+          mv ./res/icon.png ./res/icon.png.bak
           echo "${{ inputs.iconbase64 }}" | base64 -d > ./res/icon.png
 
       - name: magick stuff
@@ -360,8 +360,8 @@ jobs:
           rm ./res/icon.png
           rm ./src/ui.rs
           rm ./Cargo.toml
-          mv ./res/icon_orig.ico ./res/icon.ico
-          mv ./res/icon_orig.png ./res/icon.png
+          mv ./res/icon.ico.bak ./res/icon.ico
+          mv ./res/icon.png.bak ./res/icon.png
           mv ./src/ui.rs.bak ./src/ui.rs
           mv ./Cargo.toml.bak ./Cargo.toml
           rm ./res/32x32.png
