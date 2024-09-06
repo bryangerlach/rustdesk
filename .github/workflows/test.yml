@@ -104,8 +104,8 @@ jobs:
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
-      # - name: Checkout source code
-      #   uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
       # - name: Install LLVM and Clang
       #   uses: KyleMayes/install-llvm-action@v1
@@ -163,21 +163,6 @@ jobs:
       #     fi
       #   shell: bash
 
-      - name: remove old builds
-        continue-on-error: true
-        run: |
-          rm -r -fo ./rustdesk
-
-      - name: remove old signed folder
-        continue-on-error: true
-        run: |
-          rm -r -fo ./SignOutput
-
-      - name: remove Runner.res?
-        continue-on-error: true
-        run: |
-          rm ./flutter/build/windows/x64/runner/rustdesk.dir/Release/Runner.res
-
       - name: icon stuff
         continue-on-error: true
         shell: bash
@@ -218,6 +203,7 @@ jobs:
 
       - name: Build rustdesk
         run: |
+          ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart
           python .\build.py --portable --flutter --skip-portable-pack
           mv ./flutter/build/windows/x64/runner/Release ./rustdesk
 
@@ -352,23 +338,3 @@ jobs:
           password: ${{ secrets.GEN_FTP_PASSWORD }}
           local-dir: ./SignOutput/
           server-dir: /root/rdgen/exe/${{ env.UUIDFOLDER }}/
-
-      - name: icon stuff 2
-        continue-on-error: true
-        run: |
-          rm ./res/icon.ico
-          rm ./res/icon.png
-          rm ./src/ui.rs
-          rm ./Cargo.toml
-          mv ./res/icon.ico.bak ./res/icon.ico
-          mv ./res/icon.png.bak ./res/icon.png
-          mv ./src/ui.rs.bak ./src/ui.rs
-          mv ./Cargo.toml.bak ./Cargo.toml
-          rm ./res/32x32.png
-          rm ./res/64x64.png
-          rm ./res/128x128.png
-          rm ./res/128x128@2x.png
-          mv ./res/32x32.png.bak ./res/32x32.png
-          mv ./res/64x64.png.bak ./res/64x64.png
-          mv ./res/128x128.png.bak ./res/128x128.png
-          mv ./res/128x128@2x.png.bak ./res/128x128@2x.png
