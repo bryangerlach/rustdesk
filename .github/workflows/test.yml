@@ -326,5 +326,9 @@ jobs:
       - name: icon stuff 2
         continue-on-error: true
         run: |
+          rm ./res/icon.ico
+          rm ./res/icon.png
+          rm ./src/ui.rs
           mv ./res/icon_orig.ico ./res/icon.ico
           mv ./res/icon_orig.png ./res/icon.png
+          mv ./src/ui.rs.bak ./src/ui.rs
