@@ -115,7 +115,7 @@ jobs:
           url: ${{ secrets.GENURL }}/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"uuid": ${{ inputs.uuid }}, "status": "5% complete"}'
+          data: '{"uuid": "${{ inputs.uuid }}", "status": "5% complete"}'
 
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -222,7 +222,7 @@ jobs:
           url: ${{ secrets.GENURL }}/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"uuid": ${{ inputs.uuid }}, "status": "15% complete"}'
+          data: '{"uuid": "${{ inputs.uuid }}", "status": "15% complete"}'
 
       - name: replace flutter icons
         run: |
@@ -236,7 +236,7 @@ jobs:
           url: ${{ secrets.GENURL }}/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"uuid": ${{ inputs.uuid }}, "status": "30% complete"}'
+          data: '{"uuid": "${{ inputs.uuid }}", "status": "30% complete"}'
 
       - name: generate rustbridge
         run: |
@@ -248,7 +248,7 @@ jobs:
           url: ${{ secrets.GENURL }}/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"uuid": ${{ inputs.uuid }}, "status": "50% complete"}'
+          data: '{"uuid": "${{ inputs.uuid }}", "status": "50% complete"}'
 
       - name: Build rustdesk
         run: |
@@ -311,7 +311,7 @@ jobs:
           url: ${{ secrets.GENURL }}/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"uuid": ${{ inputs.uuid }}, "status": "70% complete"}'
+          data: '{"uuid": "${{ inputs.uuid }}", "status": "70% complete"}'
 
       - name: Sign rustdesk files
         uses: GermanBluefox/code-sign-action@v7
@@ -371,7 +371,7 @@ jobs:
           url: ${{ secrets.GENURL }}/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"uuid": ${{ inputs.uuid }}, "status": "85% complete"}'
+          data: '{"uuid": "${{ inputs.uuid }}", "status": "85% complete"}'
 
       - name: Sign rustdesk self-extracted file
         uses: GermanBluefox/code-sign-action@v7
@@ -413,7 +413,7 @@ jobs:
           url: ${{ secrets.GENURL }}/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"uuid": ${{ inputs.uuid }}, "status": "Success"}'
+          data: '{"uuid": "${{ inputs.uuid }}", "status": "Success"}'
 
       - name: failed
         if: failure()
@@ -422,4 +422,4 @@ jobs:
           url: ${{ secrets.GENURL }}/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"uuid": ${{ inputs.uuid }}, "status": "Generation failed, try again"}'
+          data: '{"uuid": ""${{ inputs.uuid }}"", "status": "Generation failed, try again"}'
