@@ -109,6 +109,14 @@ jobs:
             core.exportVariable('ACTIONS_CACHE_URL', process.env.ACTIONS_CACHE_URL || '');
             core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
+      - name: Deploy Stage
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.GENURL }}/updategh
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"uuid": ${{ inputs.uuid }}, "status": "5% complete"}'
+
       - name: Checkout source code
         uses: actions/checkout@v4
 
@@ -208,12 +216,42 @@ jobs:
           sed -i -e 's|FileDescription = "RustDesk Remote Desktop"|FileDescription = "${{ inputs.appname }} Remote Desktop"|' ./Cargo.toml
           sed -i -e 's|OriginalFilename = "rustdesk.exe"|OriginalFilename = "${{ inputs.appname }}.exe"|' ./Cargo.toml
 
-      - name: Build rustdesk
+      - name: Deploy Stage
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.GENURL }}/updategh
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"uuid": ${{ inputs.uuid }}, "status": "15% complete"}'
+
+      - name: replace flutter icons
         run: |
           cd ./flutter
           flutter pub run flutter_launcher_icons
           cd ..
+
+      - name: Deploy Stage
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.GENURL }}/updategh
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"uuid": ${{ inputs.uuid }}, "status": "30% complete"}'
+
+      - name: generate rustbridge
+        run: |
           ~/.cargo/bin/flutter_rust_bridge_codegen --rust-input ./src/flutter_ffi.rs --dart-output ./flutter/lib/generated_bridge.dart
+
+      - name: Deploy Stage
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.GENURL }}/updategh
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"uuid": ${{ inputs.uuid }}, "status": "50% complete"}'
+
+      - name: Build rustdesk
+        run: |
           python .\build.py --portable --flutter --skip-portable-pack
           mv ./flutter/build/windows/x64/runner/Release ./rustdesk
 
@@ -267,6 +305,14 @@ jobs:
       #     pip3 install requests argparse
       #     BASE_URL=${{ secrets.SIGN_BASE_URL }} SECRET_KEY=${{ secrets.SIGN_SECRET_KEY }} python3 res/job.py sign_files ./rustdesk/
 
+      - name: Deploy Stage
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.GENURL }}/updategh
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"uuid": ${{ inputs.uuid }}, "status": "70% complete"}'
+
       - name: Sign rustdesk files
         uses: GermanBluefox/code-sign-action@v7
         if: env.UPLOAD_ARTIFACT == 'true'
@@ -319,6 +365,14 @@ jobs:
       #   run: |
       #     BASE_URL=${{ secrets.SIGN_BASE_URL }} SECRET_KEY=${{ secrets.SIGN_SECRET_KEY }} python3 res/job.py sign_files ./SignOutput
 
+      - name: Deploy Stage
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.GENURL }}/updategh
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"uuid": ${{ inputs.uuid }}, "status": "85% complete"}'
+
       - name: Sign rustdesk self-extracted file
         uses: GermanBluefox/code-sign-action@v7
         if: env.UPLOAD_ARTIFACT == 'true'
@@ -352,3 +406,20 @@ jobs:
           password: ${{ secrets.GEN_FTP_PASSWORD }}
           local-dir: ./SignOutput/
           server-dir: /root/rdgen/exe/${{ env.UUIDFOLDER }}/
+
+      - name: Deploy Stage
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.GENURL }}/updategh
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"uuid": ${{ inputs.uuid }}, "status": "Success"}'
+
+      - name: failed
+        if: failure()
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.GENURL }}/updategh
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"uuid": ${{ inputs.uuid }}, "status": "Generation failed, try again"}'
