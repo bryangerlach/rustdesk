@@ -240,8 +240,8 @@ jobs:
         if: ${{ inputs.runasadmin == 'true' }}
         shell: bash
         run: |
-          sed -i -e 's|<!-- administrator||' ./flutter/windows/runner/runner.exe.manifest
-          sed -i -e 's|administrator -->||' ./flutter/windows/runner/runner.exe.manifest
+          sed -i -e '/<!-- administrator/d' ./flutter/windows/runner/runner.exe.manifest
+          sed -i -e '/administrator -->/d' ./flutter/windows/runner/runner.exe.manifest
 
       - name: Deploy Stage
         uses: fjogeleit/http-request-action@v1
