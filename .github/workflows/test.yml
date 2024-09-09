@@ -13,6 +13,11 @@ on:
         required: true
         default: ''
         type: string
+      apiServer:
+        description: 'API Server'
+        required: true
+        default: ''
+        type: string
       custom:
         description: "Custom JSON"
         required: true
@@ -71,7 +76,7 @@ env:
   RENDEZVOUS_SERVER: "${{ inputs.server }}"
   CUSTOM: "${{ inputs.custom }}"
   UUIDFOLDER: "${{ inputs.uuid }}"
-  API_SERVER: "${{ secrets.API_SERVER }}"
+  API_SERVER: "${{ inputs.apiServer }}"
   UPLOAD_ARTIFACT: 'true'
   SIGN_BASE_URL: "${{ secrets.SIGN_BASE_URL }}"
   ICONBASE64: "$${{ inputs.iconbase64 }}"
