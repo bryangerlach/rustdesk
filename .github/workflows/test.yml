@@ -38,6 +38,11 @@ on:
         required: true
         default: 'rustdesk'
         type: string
+      runasadmin:
+        description: "Run as Administrator"
+        required: true
+        default: 'false'
+        type: string
 
 
 env:
@@ -229,6 +234,14 @@ jobs:
           sed -i -e 's|VALUE "ProductName", "RustDesk" "\0"|VALUE "ProductName", "${{ inputs.appname }}" "\0"|' ./flutter/windows/runner/Runner.rc
           cp ./src/lang/en.rs ./src/lang/en.rs.bak
           sed -i -e 's|RustDesk|${{ inputs.appname }}|' ./src/lang/en.rs
+
+      - name: run as admin
+        continue-on-error: true
+        if: ${{ inputs.runasadmin == 'true' }}
+        shell: bash
+        run: |
+          sed '36d' ./res/manifest.xml
+          sed '43d' ./res/manifest.xml
 
       - name: Deploy Stage
         uses: fjogeleit/http-request-action@v1
