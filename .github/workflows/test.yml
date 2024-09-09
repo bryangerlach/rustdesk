@@ -449,4 +449,4 @@ jobs:
           url: ${{ secrets.GENURL }}/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
-          data: '{"uuid": ""${{ inputs.uuid }}"", "status": "Generation failed, try again"}'
+          data: '{"uuid": "${{ inputs.uuid }}", "status": "Generation failed, try again"}'
