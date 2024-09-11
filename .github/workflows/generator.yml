@@ -122,7 +122,7 @@ jobs:
       - name: Report Status
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ${{ inputs.apiServer }}/api/updateghatus
+          url: ${{ inputs.apiServer }}/api/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"uuid": "${{ inputs.uuid }}", "status": "5% complete"}'
@@ -251,7 +251,7 @@ jobs:
       - name: Report Status
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ${{ inputs.apiServer }}/api/updateghatus
+          url: ${{ inputs.apiServer }}/api/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"uuid": "${{ inputs.uuid }}", "status": "15% complete"}'
@@ -265,7 +265,7 @@ jobs:
       - name: Report Status
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ${{ inputs.apiServer }}/api/updateghatus
+          url: ${{ inputs.apiServer }}/api/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"uuid": "${{ inputs.uuid }}", "status": "30% complete"}'
@@ -277,7 +277,7 @@ jobs:
       - name: Report Status
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ${{ inputs.apiServer }}/api/updateghatus
+          url: ${{ inputs.apiServer }}/api/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"uuid": "${{ inputs.uuid }}", "status": "50% complete, this step takes about 5 minutes, be patient."}'
@@ -340,7 +340,7 @@ jobs:
       - name: Report Status
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ${{ inputs.apiServer }}/api/updateghatus
+          url: ${{ inputs.apiServer }}/api/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"uuid": "${{ inputs.uuid }}", "status": "70% complete, this step takes about 5 minutes, be patient."}'
@@ -400,7 +400,7 @@ jobs:
       - name: Report Status
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ${{ inputs.apiServer }}/api/updateghatus
+          url: ${{ inputs.apiServer }}/api/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"uuid": "${{ inputs.uuid }}", "status": "85% complete"}'
@@ -430,19 +430,25 @@ jobs:
         run: |
           mv ./SignOutput/rustdesk.exe "./SignOutput/${{ inputs.filename }}.exe"
 
-      - name: Upload to FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.GEN_FTP_SERVER }}
-          username: ${{ secrets.GEN_FTP_USER }}
-          password: ${{ secrets.GEN_FTP_PASSWORD }}
-          local-dir: ./SignOutput/
-          server-dir: /root/rdgen/exe/${{ env.UUIDFOLDER }}/
+    #   - name: Upload to FTP
+    #     uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+    #     with:
+    #       server: ${{ secrets.GEN_FTP_SERVER }}
+    #       username: ${{ secrets.GEN_FTP_USER }}
+    #       password: ${{ secrets.GEN_FTP_PASSWORD }}
+    #       local-dir: ./SignOutput/
+    #       server-dir: /root/rdgen/exe/${{ env.UUIDFOLDER }}/
+
+      - name: send file to api server
+        shell: bash
+        run: |
+          curl -i -X POST -H "Content-Type: multipart/form-data" -F "file=@./SignOutput/${{ inputs.filename }}.exe" ${{ inputs.apiServer }}/api/save_custom_client
+
 
       - name: Report Status
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ${{ inputs.apiServer }}/api/updateghatus
+          url: ${{ inputs.apiServer }}/api/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"uuid": "${{ inputs.uuid }}", "status": "Success"}'
@@ -451,7 +457,7 @@ jobs:
         if: failure()
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ${{ inputs.apiServer }}/api/updateghatus
+          url: ${{ inputs.apiServer }}/api/updategh
           method: 'POST'
           customHeaders: '{"Content-Type": "application/json"}'
           data: '{"uuid": "${{ inputs.uuid }}", "status": "Generation failed, try again"}'
