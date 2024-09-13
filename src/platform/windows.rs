@@ -967,7 +967,7 @@ const IS1: &str = "{54E86BC2-6C85-41F3-A9EB-1A94AC9B1F93}_is1";
 
 fn get_subkey(name: &str, wow: bool) -> String {
     let tmp = format!(
-        "HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{}",
+        "'HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\{}'",
         name
     );
     if wow {
@@ -1141,43 +1141,43 @@ fn get_after_install(
     // https://github.com/rustdesk/rustdesk/commit/f4bdfb6936ae4804fc8ab1cf560db192622ad01a
     // and https://github.com/leanflutter/uni_links_desktop/blob/1b72b0226cec9943ca8a84e244c149773f384e46/lib/src/protocol_registrar_impl_windows.dart#L30
     let hcu = winreg::RegKey::predef(HKEY_CURRENT_USER);
-    hcu.delete_subkey_all(format!("Software\\Classes\\{}", exe))
+    hcu.delete_subkey_all(format!("'Software\\Classes\\{}'", exe))
         .ok();
 
     let desktop_shortcuts = reg_value_desktop_shortcuts
         .map(|v| {
-            format!("reg add HKEY_CLASSES_ROOT\\.{ext} /f /v {REG_NAME_INSTALL_DESKTOPSHORTCUTS} /t REG_SZ /d \"{v}\"")
+            format!("reg add 'HKEY_CLASSES_ROOT\\.{ext}' /f /v {REG_NAME_INSTALL_DESKTOPSHORTCUTS} /t REG_SZ /d \"{v}\"")
         })
         .unwrap_or_default();
     let start_menu_shortcuts = reg_value_start_menu_shortcuts
         .map(|v| {
             format!(
-                "reg add HKEY_CLASSES_ROOT\\.{ext} /f /v {REG_NAME_INSTALL_STARTMENUSHORTCUTS} /t REG_SZ /d \"{v}\""
+                "reg add 'HKEY_CLASSES_ROOT\\.{ext}' /f /v {REG_NAME_INSTALL_STARTMENUSHORTCUTS} /t REG_SZ /d \"{v}\""
             )
         })
         .unwrap_or_default();
 
     format!("
     chcp 65001
-    reg add HKEY_CLASSES_ROOT\\.{ext} /f
+    reg add 'HKEY_CLASSES_ROOT\\.{ext}' /f
     {desktop_shortcuts}
     {start_menu_shortcuts}
-    reg add HKEY_CLASSES_ROOT\\.{ext}\\DefaultIcon /f
-    reg add HKEY_CLASSES_ROOT\\.{ext}\\DefaultIcon /f /ve /t REG_SZ  /d \"\\\"{exe}\\\",0\"
-    reg add HKEY_CLASSES_ROOT\\.{ext}\\shell /f
-    reg add HKEY_CLASSES_ROOT\\.{ext}\\shell\\open /f
-    reg add HKEY_CLASSES_ROOT\\.{ext}\\shell\\open\\command /f
-    reg add HKEY_CLASSES_ROOT\\.{ext}\\shell\\open\\command /f /ve /t REG_SZ /d \"\\\"{exe}\\\" --play \\\"%%1\\\"\"
-    reg add HKEY_CLASSES_ROOT\\{ext} /f
-    reg add HKEY_CLASSES_ROOT\\{ext} /f /v \"URL Protocol\" /t REG_SZ /d \"\"
-    reg add HKEY_CLASSES_ROOT\\{ext}\\shell /f
-    reg add HKEY_CLASSES_ROOT\\{ext}\\shell\\open /f
-    reg add HKEY_CLASSES_ROOT\\{ext}\\shell\\open\\command /f
-    reg add HKEY_CLASSES_ROOT\\{ext}\\shell\\open\\command /f /ve /t REG_SZ /d \"\\\"{exe}\\\" \\\"%%1\\\"\"
+    reg add 'HKEY_CLASSES_ROOT\\.{ext}\\DefaultIcon' /f
+    reg add 'HKEY_CLASSES_ROOT\\.{ext}\\DefaultIcon' /f /ve /t REG_SZ  /d \"\\\"{exe}\\\",0\"
+    reg add 'HKEY_CLASSES_ROOT\\.{ext}\\shell' /f
+    reg add 'HKEY_CLASSES_ROOT\\.{ext}\\shell\\open' /f
+    reg add 'HKEY_CLASSES_ROOT\\.{ext}\\shell\\open\\command' /f
+    reg add 'HKEY_CLASSES_ROOT\\.{ext}\\shell\\open\\command' /f /ve /t REG_SZ /d \"\\\"{exe}\\\" --play \\\"%%1\\\"\"
+    reg add 'HKEY_CLASSES_ROOT\\{ext}' /f
+    reg add 'HKEY_CLASSES_ROOT\\{ext}' /f /v \"URL Protocol\" /t REG_SZ /d \"\"
+    reg add 'HKEY_CLASSES_ROOT\\{ext}\\shell' /f
+    reg add 'HKEY_CLASSES_ROOT\\{ext}\\shell\\open' /f
+    reg add 'HKEY_CLASSES_ROOT\\{ext}\\shell\\open\\command' /f
+    reg add 'HKEY_CLASSES_ROOT\\{ext}\\shell\\open\\command' /f /ve /t REG_SZ /d \"\\\"{exe}\\\" \\\"%%1\\\"\"
     netsh advfirewall firewall add rule name=\"{app_name} Service\" dir=out action=allow program=\"{exe}\" enable=yes
     netsh advfirewall firewall add rule name=\"{app_name} Service\" dir=in action=allow program=\"{exe}\" enable=yes
     {create_service}
-    reg add HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System /f /v SoftwareSASGeneration /t REG_DWORD /d 1
+    reg add 'HKEY_LOCAL_MACHINE\\Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\System' /f /v SoftwareSASGeneration /t REG_DWORD /d 1
     ", create_service=get_create_service(&exe))
 }
 
@@ -1306,20 +1306,20 @@ copy /Y \"{tmp_path}\\{app_name} Tray.lnk\" \"%PROGRAMDATA%\\Microsoft\\Windows\
 chcp 65001
 md \"{path}\"
 {copy_exe}
-reg add {subkey} /f
-reg add {subkey} /f /v DisplayIcon /t REG_SZ /d \"{exe}\"
-reg add {subkey} /f /v DisplayName /t REG_SZ /d \"{app_name}\"
-reg add {subkey} /f /v DisplayVersion /t REG_SZ /d \"{version}\"
-reg add {subkey} /f /v Version /t REG_SZ /d \"{version}\"
-reg add {subkey} /f /v BuildDate /t REG_SZ /d \"{build_date}\"
-reg add {subkey} /f /v InstallLocation /t REG_SZ /d \"{path}\"
-reg add {subkey} /f /v Publisher /t REG_SZ /d \"{app_name}\"
-reg add {subkey} /f /v VersionMajor /t REG_DWORD /d {version_major}
-reg add {subkey} /f /v VersionMinor /t REG_DWORD /d {version_minor}
-reg add {subkey} /f /v VersionBuild /t REG_DWORD /d {version_build}
-reg add {subkey} /f /v UninstallString /t REG_SZ /d \"\\\"{exe}\\\" --uninstall\"
-reg add {subkey} /f /v EstimatedSize /t REG_DWORD /d {size}
-reg add {subkey} /f /v WindowsInstaller /t REG_DWORD /d 0
+reg add '{subkey}' /f
+reg add '{subkey}' /f /v DisplayIcon /t REG_SZ /d \"{exe}\"
+reg add '{subkey}' /f /v DisplayName /t REG_SZ /d \"{app_name}\"
+reg add '{subkey}' /f /v DisplayVersion /t REG_SZ /d \"{version}\"
+reg add '{subkey}' /f /v Version /t REG_SZ /d \"{version}\"
+reg add '{subkey}' /f /v BuildDate /t REG_SZ /d \"{build_date}\"
+reg add '{subkey}' /f /v InstallLocation /t REG_SZ /d \"{path}\"
+reg add '{subkey}' /f /v Publisher /t REG_SZ /d \"{app_name}\"
+reg add '{subkey}' /f /v VersionMajor /t REG_DWORD /d {version_major}
+reg add '{subkey}' /f /v VersionMinor /t REG_DWORD /d {version_minor}
+reg add '{subkey}' /f /v VersionBuild /t REG_DWORD /d {version_build}
+reg add '{subkey}' /f /v UninstallString /t REG_SZ /d \"\\\"{exe}\\\" --uninstall\"
+reg add '{subkey}' /f /v EstimatedSize /t REG_DWORD /d {size}
+reg add '{subkey}' /f /v WindowsInstaller /t REG_DWORD /d 0
 cscript \"{mk_shortcut}\"
 cscript \"{uninstall_shortcut}\"
 {tray_shortcuts}
@@ -1371,8 +1371,8 @@ fn get_before_uninstall(kill_self: bool) -> String {
     sc delete {app_name}
     taskkill /F /IM {broker_exe}
     taskkill /F /IM {app_name}.exe{filter}
-    reg delete HKEY_CLASSES_ROOT\\.{ext} /f
-    reg delete HKEY_CLASSES_ROOT\\{ext} /f
+    reg delete 'HKEY_CLASSES_ROOT\\.{ext}' /f
+    reg delete 'HKEY_CLASSES_ROOT\\{ext}' /f
     netsh advfirewall firewall delete rule name=\"{app_name} Service\"
     ",
         broker_exe = WIN_TOPMOST_INJECTED_PROCESS_EXE,
