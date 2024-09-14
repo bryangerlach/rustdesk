@@ -833,6 +833,12 @@ pub fn get_app_name() -> String {
 }
 
 #[inline]
+pub fn get_app_name_registry() -> String {
+    let s = hbb_common::config::APP_NAME.read().unwrap().clone();
+    s.split_whitespace().collect()
+}
+
+#[inline]
 pub fn is_rustdesk() -> bool {
     hbb_common::config::APP_NAME.read().unwrap().eq("RustDesk")
 }
