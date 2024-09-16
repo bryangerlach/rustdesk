@@ -775,7 +775,7 @@ pub fn is_share_rdp() -> bool {
 pub fn set_share_rdp(enable: bool) {
     let (subkey, _, _, _) = get_install_info();
     let cmd = format!(
-        "reg add {} /f /v share_rdp /t REG_SZ /d \"{}\"",
+        "reg add \"{}\" /f /v share_rdp /t REG_SZ /d \"{}\"",
         subkey,
         if enable { "true" } else { "false" }
     );
@@ -1367,12 +1367,12 @@ fn get_before_uninstall(kill_self: bool) -> String {
     format!(
         "
     chcp 65001
-    sc stop {app_name}
-    sc delete {app_name}
+    sc stop \"{app_name}\"
+    sc delete \"{app_name}\"
     taskkill /F /IM {broker_exe}
-    taskkill /F /IM {app_name}.exe{filter}
-    reg delete HKEY_CLASSES_ROOT\\.{ext} /f
-    reg delete HKEY_CLASSES_ROOT\\{ext} /f
+    taskkill /F /IM \"{app_name}.exe{filter}\"
+    reg delete \"HKEY_CLASSES_ROOT\\.{ext}\" /f
+    reg delete \"HKEY_CLASSES_ROOT\\{ext}\" /f
     netsh advfirewall firewall delete rule name=\"{app_name} Service\"
     ",
         broker_exe = WIN_TOPMOST_INJECTED_PROCESS_EXE,
@@ -1396,7 +1396,7 @@ fn get_uninstall(kill_self: bool) -> String {
         "
     {before_uninstall}
     {uninstall_cert_cmd}
-    reg delete {subkey} /f
+    reg delete \"{subkey}\" /f
     {uninstall_amyuni_idd}
     if exist \"{path}\" rd /s /q \"{path}\"
     if exist \"{start_menu}\" rd /s /q \"{start_menu}\"
@@ -1538,7 +1538,7 @@ pub fn get_reg(name: &str) -> String {
 fn get_reg_of(subkey: &str, name: &str) -> String {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
     let newsubkey = subkey.replace("HKEY_LOCAL_MACHINE\\", "");
-    if let Ok(tmp) = hklm.open_subkey(format!("\"{newsubkey}\"")) {
+    if let Ok(tmp) = hklm.open_subkey(format!("{newsubkey}")) {
         if let Ok(v) = tmp.get_value(name) {
             return v;
         }
@@ -2164,7 +2164,7 @@ pub fn uninstall_service(show_new_window: bool, _: bool) -> bool {
     sc delete {app_name}
     if exist \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\" del /f /q \"%PROGRAMDATA%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\{app_name} Tray.lnk\"
     taskkill /F /IM {broker_exe}
-    taskkill /F /IM {app_name}.exe{filter}
+    taskkill /F /IM \"{app_name}.exe{filter}\"
     ",
         app_name = crate::get_app_name(),
         broker_exe = WIN_TOPMOST_INJECTED_PROCESS_EXE,
