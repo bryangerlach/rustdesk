@@ -33,6 +33,11 @@ on:
         required: false
         default: ''
         type: string
+      logobase64:
+        description: "logo in base64"
+        required: false
+        default: ''
+        type: string
       appname:
         description: "app name"
         required: true
@@ -292,6 +297,12 @@ jobs:
         run: |
           mv ./rustdesk/data/flutter_assets/assets/icon.svg ./rustdesk/data/flutter_assets/assets/icon.svg.bak
           magick ./res/icon.png ./rustdesk/data/flutter_assets/assets/icon.svg
+
+      - name: logo stuff
+        continue-on-error: true
+        shell: bash
+        run: |
+          echo "${{ inputs.logobase64 }}" | base64 -d > ./rustdesk/data/flutter_assets/assets/logo.png
           
       #lines removed from above:
       #Invoke-WebRequest -Uri https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip -OutFile usbmmidd_v2.zip
