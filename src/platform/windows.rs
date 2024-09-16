@@ -1537,7 +1537,8 @@ pub fn get_reg(name: &str) -> String {
 
 fn get_reg_of(subkey: &str, name: &str) -> String {
     let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-    if let Ok(tmp) = hklm.open_subkey(subkey.replace("HKEY_LOCAL_MACHINE\\", "")) {
+    let newsubkey = subkey.replace("HKEY_LOCAL_MACHINE\\", "");
+    if let Ok(tmp) = hklm.open_subkey(format!("\"{newsubkey}\"")) {
         if let Ok(v) = tmp.get_value(name) {
             return v;
         }
