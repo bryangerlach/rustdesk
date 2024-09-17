@@ -303,7 +303,6 @@ jobs:
         run: |
           mv ./rustdesk/data/flutter_assets/assets/icon.svg ./rustdesk/data/flutter_assets/assets/icon.svg.bak
           magick ./res/icon.png ./rustdesk/data/flutter_assets/assets/icon.svg
-          magick ./rustdesk/data/flutter_assets/assets/logo.png ./rustdesk/data/flutter_assets/assets/logo.svg
 
       - name: logo stuff
         continue-on-error: true
