@@ -987,17 +987,17 @@ fn get_valid_subkey() -> String {
         return subkey;
     }
     let app_name = crate::get_app_name();
-    let subkey = get_subkey(&app_name, true).replace(" ", "");
+    let subkey = get_subkey(&app_name, true);
     if !get_reg_of(&subkey, "InstallLocation").is_empty() {
         return subkey;
     }
-    return get_subkey(&app_name, false).replace(" ", "");
+    return get_subkey(&app_name, false);
 }
 
 // Return install options other than InstallLocation.
 pub fn get_install_options() -> String {
     let app_name = crate::get_app_name();
-    let subkey = format!(".{}", app_name.to_lowercase()).replace(" ", "");
+    let subkey = format!(".{}", app_name.to_lowercase());
     let mut opts = HashMap::new();
 
     let desktop_shortcuts = get_reg_of_hkcr(&subkey, REG_NAME_INSTALL_DESKTOPSHORTCUTS);
@@ -1135,7 +1135,7 @@ fn get_after_install(
     reg_value_desktop_shortcuts: Option<String>,
 ) -> String {
     let app_name = crate::get_app_name();
-    let ext = app_name.to_lowercase().replace(" ", "");
+    let ext = app_name.to_lowercase();
 
     // reg delete HKEY_CURRENT_USER\Software\Classes for
     // https://github.com/rustdesk/rustdesk/commit/f4bdfb6936ae4804fc8ab1cf560db192622ad01a
@@ -1358,7 +1358,7 @@ pub fn run_before_uninstall() -> ResultType<()> {
 
 fn get_before_uninstall(kill_self: bool) -> String {
     let app_name = crate::get_app_name();
-    let ext = app_name.to_lowercase().replace(" ", "");
+    let ext = app_name.to_lowercase();
     let filter = if kill_self {
         "".to_string()
     } else {
