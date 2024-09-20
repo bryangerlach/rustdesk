@@ -150,6 +150,7 @@ jobs:
                git \
                g++ \
                g++-multilib \
+               imagemagick \
                libappindicator3-dev \
                libasound2-dev \
                libc6-dev \
@@ -266,12 +267,12 @@ jobs:
           mv ./res/64x64.png ./res/64x64.png.bak
           mv ./res/128x128.png ./res/128x128.png.bak
           mv ./res/128x128@2x.png ./res/128x128@2x.png.bak
-          magick ./res/icon.png -define icon:auto-resize=256,64,48,32,16 ./res/icon.ico
+          convert ./res/icon.png -define icon:auto-resize=256,64,48,32,16 ./res/icon.ico
           cp ./res/icon.ico ./res/tray-icon.ico
-          magick ./res/icon.png -resize 32x32 ./res/32x32.png
-          magick ./res/icon.png -resize 64x64 ./res/64x64.png
-          magick ./res/icon.png -resize 128x128 ./res/128x128.png
-          magick ./res/128x128.png -resize 200% ./res/128x128@2x.png
+          convert ./res/icon.png -resize 32x32 ./res/32x32.png
+          convert ./res/icon.png -resize 64x64 ./res/64x64.png
+          convert ./res/icon.png -resize 128x128 ./res/128x128.png
+          convert ./res/128x128.png -resize 200% ./res/128x128@2x.png
 
 
       - name: ui.rs icon
@@ -360,7 +361,7 @@ jobs:
               mkdir -p ./flutter/android/app/src/main/jniLibs/arm64-v8a
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/
               cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
-              echo -n "${{ env.CUSTOM }}" | cat > ./flutter/android/app/src/main/jniLibs/arm64-v8a/custom.txt
+              echo -n "${{ env.CUSTOM }}" | cat > ./flutter/android/app/src/main/custom.txt
               # build flutter
               pushd flutter
               flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-arm64 --split-per-abi
@@ -370,7 +371,7 @@ jobs:
               mkdir -p ./flutter/android/app/src/main/jniLibs/armeabi-v7a
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/arm-linux-androideabi/libc++_shared.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/
               cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/armeabi-v7a/librustdesk.so
-              echo -n "${{ env.CUSTOM }}" | cat > ./flutter/android/app/src/main/jniLibs/armeabi-v7a/custom.txt
+              echo -n "${{ env.CUSTOM }}" | cat > ./flutter/android/app/src/main/custom.txt
               # build flutter
               pushd flutter
               flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-arm --split-per-abi
@@ -380,7 +381,7 @@ jobs:
               mkdir -p ./flutter/android/app/src/main/jniLibs/x86_64
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/x86_64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/x86_64/
               cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/x86_64/librustdesk.so
-              echo -n "${{ env.CUSTOM }}" | cat > ./flutter/android/app/src/main/jniLibs/x86_64/custom.txt
+              echo -n "${{ env.CUSTOM }}" | cat > ./flutter/android/app/src/main/custom.txt
               # build flutter
               pushd flutter
               flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-x64 --split-per-abi
@@ -390,7 +391,7 @@ jobs:
               mkdir -p ./flutter/android/app/src/main/jniLibs/x86
               cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/i686-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/x86/
               cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/x86/librustdesk.so
-              echo -n "${{ env.CUSTOM }}" | cat > ./flutter/android/app/src/main/jniLibs/x86/custom.txt
+              echo -n "${{ env.CUSTOM }}" | cat > ./flutter/android/app/src/main/custom.txt
               # build flutter
               pushd flutter
               flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-x86 --split-per-abi
