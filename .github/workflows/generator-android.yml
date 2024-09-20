@@ -1,5 +1,5 @@
-name: Custom Client Generator
-run-name: Custom Client Generator
+name: Custom Android Client Generator
+run-name: Custom Android Client Generator
 on: 
   workflow_dispatch:
     inputs:
@@ -30,6 +30,11 @@ on:
         type: string
       iconbase64:
         description: "icon in base64"
+        required: false
+        default: ''
+        type: string
+      logobase64:
+        description: "logo in base64"
         required: false
         default: ''
         type: string

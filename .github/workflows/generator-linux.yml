@@ -1,5 +1,5 @@
-name: Custom Client Generator
-run-name: Custom Client Generator
+name: Custom Linux Client Generator
+run-name: Custom Linux Client Generator
 on: 
   workflow_dispatch:
     inputs:
