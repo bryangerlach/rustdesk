@@ -244,6 +244,8 @@ jobs:
           sed -i -e 's|VALUE "ProductName", "RustDesk" "\0"|VALUE "ProductName", "${{ inputs.appname }}" "\0"|' ./flutter/windows/runner/Runner.rc
           cp ./src/lang/en.rs ./src/lang/en.rs.bak
           sed -i -e 's|RustDesk|${{ inputs.appname }}|' ./src/lang/en.rs
+          cp ./src/ui_interface.rs ./src/ui_interface.rs.bak
+          sed -i -e 's|{drive}\\ProgramData\\RustDesk\\recording|{drive}\\ProgramData\\${{ inputs.appname }}\\recording|' ./src/ui_interface.rs
 
       - name: run as admin
         continue-on-error: true
