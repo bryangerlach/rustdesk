@@ -141,8 +141,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          echo ${{ secrets.SUDOPW }} | sudo -S apt-get update
+          echo ${{ secrets.SUDOPW }} | sudo -S apt-get install -y \
                clang \
                cmake \
                curl \
