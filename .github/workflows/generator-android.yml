@@ -94,7 +94,7 @@ jobs:
   build-rustdesk-android:
     needs: [generate-bridge-linux]
     name: build rustdesk android apk ${{ matrix.job.target }}
-    runs-on: ${{ matrix.job.os }}
+    runs-on: self-hosted
     strategy:
       fail-fast: false
       matrix:
@@ -304,6 +304,9 @@ jobs:
           sed -i -e 's|VALUE "ProductName", "RustDesk" "\0"|VALUE "ProductName", "${{ inputs.appname }}" "\0"|' ./flutter/windows/runner/Runner.rc
           cp ./src/lang/en.rs ./src/lang/en.rs.bak
           sed -i -e 's|RustDesk|${{ inputs.appname }}|' ./src/lang/en.rs
+          cp ./flutter/android/app/src/main/AndroidManifest.xml ./flutter/android/app/src/main/AndroidManifest.xml.bak
+          sed -i -e 's|android:label="RustDesk"|android:label="${{ inputs.appname }}"|' ./flutter/android/app/src/main/AndroidManifest.xml
+          sed -i -e 's|android:label="RustDesk Input"|android:label="${{ inputs.appname }} Input"|' ./flutter/android/app/src/main/AndroidManifest.xml
 
       - name: replace flutter icons
         run: |
@@ -361,7 +364,8 @@ jobs:
           mkdir -p ./flutter/android/app/src/main/jniLibs/arm64-v8a
           cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/
           cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
-          echo -n "${{ env.CUSTOM }}" | cat > ./flutter/android/app/src/main/custom.txt
+          echo -n "${{ env.CUSTOM }}" | cat > ./flutter/android/app/src/main/jniLibs/arm64-v8a/custom.txt
+          convert ./res/icon.png ./flutter/android/app/src/main/jniLibs/arm64-v8a/assets/flutter_assets/assets/icon.svg
           # build flutter
           pushd flutter
           flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-arm64 --split-per-abi
