@@ -178,11 +178,11 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # - name: Install flutter
-      #   uses: subosito/flutter-action@v2
-      #   with:
-      #     channel: "stable"
-      #     flutter-version: ${{ env.ANDROID_FLUTTER_VERSION }}
+      - name: Install flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          flutter-version: ${{ env.ANDROID_FLUTTER_VERSION }}
 
       - uses: nttld/setup-ndk@v1
         id: setup-ndk
