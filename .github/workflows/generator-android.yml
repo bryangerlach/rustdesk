@@ -183,11 +183,12 @@ jobs:
       #   with:
       #     channel: "stable"
       #     flutter-version: ${{ env.ANDROID_FLUTTER_VERSION }}
-      # - uses: nttld/setup-ndk@v1
-      #   id: setup-ndk
-      #   with:
-      #     ndk-version: ${{ env.NDK_VERSION }}
-      #     add-to-path: true
+
+      - uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: ${{ env.NDK_VERSION }}
+          add-to-path: true
 
       # - name: Setup vcpkg with Github Actions binary cache
       #   uses: lukka/run-vcpkg@v11
@@ -196,33 +197,33 @@ jobs:
       #     vcpkgGitCommitId: ${{ env.VCPKG_COMMIT_ID }}
       #     doNotCache: false
 
-      - name: Install vcpkg dependencies
-        run: |
-          #case ${{ matrix.job.target }} in
-          #  aarch64-linux-android)
-          ANDROID_TARGET=arm64-v8a
-          #  ;;
-          #   armv7-linux-androideabi)
-          #     ANDROID_TARGET=armeabi-v7a
-          #   ;;
-          #   x86_64-linux-android)
-          #     ANDROID_TARGET=x86_64
-          #   ;;
-          #   i686-linux-android)
-          #     ANDROID_TARGET=x86
-          #   ;;
-          # esac
-          if ! ./flutter/build_android_deps.sh "${ANDROID_TARGET}"; then
-            find "${VCPKG_ROOT}/" -name "*.log" | while read -r _1; do
-              echo "$_1:"
-              echo "======"
-              cat "$_1"
-              echo "======"
-              echo ""
-            done
-            exit 1
-          fi
-        shell: bash
+      # - name: Install vcpkg dependencies
+      #   run: |
+      #     #case ${{ matrix.job.target }} in
+      #     #  aarch64-linux-android)
+      #     ANDROID_TARGET=arm64-v8a
+      #     #  ;;
+      #     #   armv7-linux-androideabi)
+      #     #     ANDROID_TARGET=armeabi-v7a
+      #     #   ;;
+      #     #   x86_64-linux-android)
+      #     #     ANDROID_TARGET=x86_64
+      #     #   ;;
+      #     #   i686-linux-android)
+      #     #     ANDROID_TARGET=x86
+      #     #   ;;
+      #     # esac
+      #     if ! ./flutter/build_android_deps.sh "${ANDROID_TARGET}"; then
+      #       find "${VCPKG_ROOT}/" -name "*.log" | while read -r _1; do
+      #         echo "$_1:"
+      #         echo "======"
+      #         cat "$_1"
+      #         echo "======"
+      #         echo ""
+      #       done
+      #       exit 1
+      #     fi
+      #   shell: bash
 
       - name: Restore bridge files
         uses: actions/download-artifact@master
@@ -230,16 +231,16 @@ jobs:
           name: bridge-artifact
           path: ./
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@v1
-        with:
-          toolchain: ${{ env.RUST_VERSION }}
-          components: "rustfmt"
+      # - name: Install Rust toolchain
+      #   uses: dtolnay/rust-toolchain@v1
+      #   with:
+      #     toolchain: ${{ env.RUST_VERSION }}
+      #     components: "rustfmt"
 
-      - uses: Swatinem/rust-cache@v2
-        with:
-          prefix-key: rustdesk-lib-cache-android # TODO: drop '-android' part after caches are invalidated
-          key: ${{ matrix.job.target }}
+      # - uses: Swatinem/rust-cache@v2
+      #   with:
+      #     prefix-key: rustdesk-lib-cache-android # TODO: drop '-android' part after caches are invalidated
+      #     key: ${{ matrix.job.target }}
 
       - name: fix android for flutter 3.13
         if: $${{ env.ANDROID_FLUTTER_VERSION == '3.13.9' }}
