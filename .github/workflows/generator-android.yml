@@ -367,7 +367,7 @@ jobs:
           cp ${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/
           cp ./target/${{ matrix.job.target }}/release/liblibrustdesk.so ./flutter/android/app/src/main/jniLibs/arm64-v8a/librustdesk.so
           echo -n "${{ env.CUSTOM }}" | cat > ./flutter/android/app/src/main/jniLibs/arm64-v8a/custom.txt
-          convert ./res/icon.png ./flutter/android/app/src/main/jniLibs/arm64-v8a/assets/flutter_assets/assets/icon.svg
+          convert ./res/icon.png ./flutter/assets/icon.svg
           # build flutter
           pushd flutter
           flutter build apk "--${{ matrix.job.reltype }}" --target-platform android-arm64 --split-per-abi
