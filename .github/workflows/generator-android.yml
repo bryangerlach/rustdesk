@@ -410,6 +410,7 @@ jobs:
 
       - uses: r0adkll/sign-android-release@v1
         name: Sign app APK
+        continue-on-error: true
         if: env.ANDROID_SIGNING_KEY != null
         id: sign-rustdesk
         with:
