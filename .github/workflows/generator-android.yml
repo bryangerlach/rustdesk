@@ -313,8 +313,8 @@ jobs:
       - name: replace flutter icons
         run: |
           cd ./flutter
-          #flutter pub run flutter_launcher_icons
-          dart run flutter_launcher_icons:main
+          flutter pub run flutter_launcher_icons
+          #dart run flutter_launcher_icons:main
           cd ..
       ##########################################################
 
@@ -425,12 +425,12 @@ jobs:
           # override default build-tools version (29.0.3) -- optional
           BUILD_TOOLS_VERSION: "30.0.2"
 
-      - name: Upload Artifacts
-        if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
-        uses: actions/upload-artifact@master
-        with:
-          name: ${{ inputs.filename }}-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
-          path: ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
+      # - name: Upload Artifacts
+      #   if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
+      #   uses: actions/upload-artifact@master
+      #   with:
+      #     name: ${{ inputs.filename }}-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
+      #     path: ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
 
       # - name: Publish signed apk package
       #   if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
