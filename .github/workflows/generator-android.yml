@@ -407,7 +407,8 @@ jobs:
           popd
           mkdir -p signed-apk; pushd signed-apk
           mv ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk ./${{ inputs.filename }}-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
-
+          popd
+          
       - uses: r0adkll/sign-android-release@v1
         name: Sign app APK
         continue-on-error: true
