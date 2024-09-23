@@ -313,7 +313,8 @@ jobs:
       - name: replace flutter icons
         run: |
           cd ./flutter
-          flutter pub run flutter_launcher_icons
+          #flutter pub run flutter_launcher_icons
+          dart run flutter_launcher_icons:main
           cd ..
       ##########################################################
 
@@ -408,7 +409,7 @@ jobs:
           mkdir -p signed-apk; pushd signed-apk
           mv ../rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk ./${{ inputs.filename }}-${{ env.VERSION }}-${{ matrix.job.arch }}${{ matrix.job.suffix }}.apk
           popd
-          
+
       - uses: r0adkll/sign-android-release@v1
         name: Sign app APK
         continue-on-error: true
