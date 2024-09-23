@@ -309,12 +309,14 @@ jobs:
           cp ./flutter/android/app/src/main/AndroidManifest.xml ./flutter/android/app/src/main/AndroidManifest.xml.bak
           sed -i -e 's|android:label="RustDesk"|android:label="${{ inputs.appname }}"|' ./flutter/android/app/src/main/AndroidManifest.xml
           sed -i -e 's|android:label="RustDesk Input"|android:label="${{ inputs.appname }} Input"|' ./flutter/android/app/src/main/AndroidManifest.xml
+          cp ./flutter/android/app/src/main/res/values/strings.xml ./flutter/android/app/src/main/res/values/strings.xml.bak
+          sed -i -e 's|<string name="app_name">RustDesk</string>|<string name="app_name">${{ inputs.appname }}</string>|' ./flutter/android/app/src/main/res/values/strings.xml
+          sed -i -e 's|<string name="accessibility_service_description">Allow other devices to control your phone using virtual touch, when RustDesk screen sharing is established</string>|<string name="accessibility_service_description">Allow other devices to control your phone using virtual touch, when ${{ inputs.appname }} screen sharing is established</string>|' ./flutter/android/app/src/main/res/values/strings.xml
 
       - name: replace flutter icons
         run: |
           cd ./flutter
           flutter pub run flutter_launcher_icons
-          #dart run flutter_launcher_icons:main
           cd ..
       ##########################################################
 
