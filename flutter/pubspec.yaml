@@ -125,6 +125,7 @@ flutter_icons:
   android: true
   adaptive_icon_background: "#ffffff"
   adaptive_icon_foreground: "../res/icon.png"
+  adaptive_icon_foreground_inset: 32
   ios: true
   windows:
     generate: true
