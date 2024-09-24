@@ -313,7 +313,7 @@ jobs:
           sed -i -e 's|<string name="app_name">RustDesk</string>|<string name="app_name">${{ inputs.appname }}</string>|' ./flutter/android/app/src/main/res/values/strings.xml
           sed -i -e 's|<string name="accessibility_service_description">Allow other devices to control your phone using virtual touch, when RustDesk screen sharing is established</string>|<string name="accessibility_service_description">Allow other devices to control your phone using virtual touch, when ${{ inputs.appname }} screen sharing is established</string>|' ./flutter/android/app/src/main/res/values/strings.xml
           sed -i -e "s|title: 'RustDesk',|title: '${{ inputs.appname }}',|" ./flutter/lib/main.dart
-
+          sed -i -e "s|return 'RustDesk';|return '${{ inputs.appname }}';|" ./flutter/lib/web/bridge.dart
 
       - name: replace flutter icons
         run: |
