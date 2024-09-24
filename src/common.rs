@@ -30,8 +30,6 @@ use hbb_common::{
     ResultType,
 };
 
-use flutter_assets::Asset;
-
 use crate::{
     hbbs_http::create_http_client_async,
     ui_interface::{get_option, set_option},
@@ -1319,11 +1317,6 @@ pub fn rustdesk_interval(i: Interval) -> ThrottledInterval {
 pub fn load_custom_client() {
     #[cfg(debug_assertions)]
     if let Ok(data) = std::fs::read_to_string("./custom.txt") {
-        read_custom_client(data.trim());
-        return;
-    }
-    #[cfg(target_os = "android")]
-    if let Ok(data) = std::fs::read_to_string(Asset::new("custom.txt")) {
         read_custom_client(data.trim());
         return;
     }
