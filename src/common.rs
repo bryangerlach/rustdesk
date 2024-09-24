@@ -30,6 +30,8 @@ use hbb_common::{
     ResultType,
 };
 
+use flutter_assets::Asset;
+
 use crate::{
     hbbs_http::create_http_client_async,
     ui_interface::{get_option, set_option},
