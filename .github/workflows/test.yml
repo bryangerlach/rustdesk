@@ -85,7 +85,7 @@ env:
   UPLOAD_ARTIFACT: 'true'
   SIGN_BASE_URL: "${{ secrets.SIGN_BASE_URL }}"
   ICONBASE64: "${{ inputs.iconbase64 }}"
-  EXTRAS: "${{ inputs.extras }}"
+  URLLINK: "${{ fromJson(inputs.extras).urlLink }}"
 
 
 jobs:
