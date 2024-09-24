@@ -84,7 +84,8 @@ env:
   API_SERVER: "${{ inputs.apiServer }}"
   UPLOAD_ARTIFACT: 'true'
   SIGN_BASE_URL: "${{ secrets.SIGN_BASE_URL }}"
-  ICONBASE64: "$${{ inputs.iconbase64 }}"
+  ICONBASE64: "${{ inputs.iconbase64 }}"
+  EXTRAS: "${{ inputs.extras }}"
 
 
 jobs:
