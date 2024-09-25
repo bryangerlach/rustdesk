@@ -953,7 +953,7 @@ jobs:
                git \
                g++ \
                g++-multilib \
-               libappindicator3-dev \
+               libayatana-appindicator3-dev \
                libasound2-dev \
                libc6-dev \
                libclang-10-dev \
@@ -1229,7 +1229,7 @@ jobs:
                git \
                g++ \
                g++-multilib \
-               libappindicator3-dev \
+               libayatana-appindicator3-dev \
                libasound2-dev \
                libc6-dev \
                libclang-10-dev \
@@ -1506,7 +1506,7 @@ jobs:
                gcc \
                git \
                g++ \
-               libappindicator3-dev \
+               libayatana-appindicator3-dev \
                libasound2-dev \
                libclang-10-dev \
                libgstreamer1.0-dev \
