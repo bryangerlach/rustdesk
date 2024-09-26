@@ -236,11 +236,11 @@ jobs:
           sed -i -e 's|FileDescription = "RustDesk Remote Desktop"|FileDescription = "${{ inputs.appname }}"|' ./libs/portable/Cargo.toml
           sed -i -e 's|OriginalFilename = "rustdesk.exe"|OriginalFilename = "${{ inputs.appname }}.exe"|' ./libs/portable/Cargo.toml
           cp ./flutter/windows/runner/Runner.rc ./flutter/windows/runner/Runner.rc.bak
-          sed -i -e 's|VALUE "FileDescription", "RustDesk Remote Desktop" "\0"|VALUE "FileDescription", "${{ inputs.appname }}" "\0"|' ./flutter/windows/runner/Runner.rc
-          sed -i -e 's|VALUE "InternalName", "rustdesk" "\0"|VALUE "InternalName", "rustdesk" "\0"|' ./flutter/windows/runner/Runner.rc
-          sed -i -e 's|VALUE "LegalCopyright", "Copyright © 2024 Purslane Ltd. All rights reserved." "\0"|VALUE "LegalCopyright", "Copyright © 2024" "\0"|' ./flutter/windows/runner/Runner.rc
-          sed -i -e 's|VALUE "OriginalFilename", "rustdesk.exe" "\0"|VALUE "OriginalFilename", "${{ inputs.filename }}" "\0"|' ./flutter/windows/runner/Runner.rc
-          sed -i -e 's|VALUE "ProductName", "RustDesk" "\0"|VALUE "ProductName", "${{ inputs.appname }}" "\0"|' ./flutter/windows/runner/Runner.rc
+          sed -i -e 's|"RustDesk Remote Desktop"|"${{ inputs.appname }}"|' ./flutter/windows/runner/Runner.rc
+          sed -i -e 's|VALUE "InternalName", "rustdesk" "\0"|VALUE "InternalName", "${{ inputs.appname }}" "\0"|' ./flutter/windows/runner/Runner.rc
+          sed -i -e 's|"Copyright © 2024 Purslane Ltd. All rights reserved."|"Copyright © 2024"|' ./flutter/windows/runner/Runner.rc
+          sed -i -e 's|"rustdesk.exe"|"${{ inputs.filename }}"|' ./flutter/windows/runner/Runner.rc
+          sed -i -e 's|"RustDesk"|"${{ inputs.appname }}"|' ./flutter/windows/runner/Runner.rc
           cp ./src/lang/en.rs ./src/lang/en.rs.bak
           sed -i -e 's|RustDesk|${{ inputs.appname }}|' ./src/lang/en.rs
           sed -i -e 's|Homepage: https://rustdesk.com|Homepage: ${{ fromJson(inputs.extras).urlLink }}|' ./build.py
