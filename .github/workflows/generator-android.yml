@@ -48,10 +48,10 @@ on:
         required: true
         default: 'rustdesk'
         type: string
-      runasadmin:
-        description: "Run as Administrator"
+      extras:
+        description: "extra inputs in json"
         required: true
-        default: 'false'
+        default: '{}'
         type: string
 
 
@@ -288,32 +288,42 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          #cp ./Cargo.toml ./Cargo.toml.bak
+          cp ./Cargo.toml ./Cargo.toml.bak
           sed -i -e 's|description = "RustDesk Remote Desktop"|description = "${{ inputs.appname }}"|' ./Cargo.toml
           sed -i -e 's|ProductName = "RustDesk"|ProductName = "${{ inputs.appname }}"|' ./Cargo.toml
           sed -i -e 's|FileDescription = "RustDesk Remote Desktop"|FileDescription = "${{ inputs.appname }}"|' ./Cargo.toml
           sed -i -e 's|OriginalFilename = "rustdesk.exe"|OriginalFilename = "${{ inputs.appname }}.exe"|' ./Cargo.toml
-          #cp ./libs/portable/Cargo.toml ./libs/portable/Cargo.toml.bak
+          cp ./libs/portable/Cargo.toml ./libs/portable/Cargo.toml.bak
           sed -i -e 's|description = "RustDesk Remote Desktop"|description = "${{ inputs.appname }}"|' ./libs/portable/Cargo.toml
           sed -i -e 's|ProductName = "RustDesk"|ProductName = "${{ inputs.appname }}"|' ./libs/portable/Cargo.toml
           sed -i -e 's|FileDescription = "RustDesk Remote Desktop"|FileDescription = "${{ inputs.appname }}"|' ./libs/portable/Cargo.toml
           sed -i -e 's|OriginalFilename = "rustdesk.exe"|OriginalFilename = "${{ inputs.appname }}.exe"|' ./libs/portable/Cargo.toml
-          #cp ./flutter/windows/runner/Runner.rc ./flutter/windows/runner/Runner.rc.bak
-          sed -i -e 's|VALUE "FileDescription", "RustDesk Remote Desktop" "\0"|VALUE "FileDescription", "${{ inputs.appname }}" "\0"|' ./flutter/windows/runner/Runner.rc
-          sed -i -e 's|VALUE "InternalName", "rustdesk" "\0"|VALUE "InternalName", "rustdesk" "\0"|' ./flutter/windows/runner/Runner.rc
-          sed -i -e 's|VALUE "LegalCopyright", "Copyright © 2024 Purslane Ltd. All rights reserved." "\0"|VALUE "LegalCopyright", "Copyright © 2024" "\0"|' ./flutter/windows/runner/Runner.rc
-          sed -i -e 's|VALUE "OriginalFilename", "rustdesk.exe" "\0"|VALUE "OriginalFilename", "${{ inputs.filename }}" "\0"|' ./flutter/windows/runner/Runner.rc
-          sed -i -e 's|VALUE "ProductName", "RustDesk" "\0"|VALUE "ProductName", "${{ inputs.appname }}" "\0"|' ./flutter/windows/runner/Runner.rc
-          #cp ./src/lang/en.rs ./src/lang/en.rs.bak
+          cp ./flutter/windows/runner/Runner.rc ./flutter/windows/runner/Runner.rc.bak
+          sed -i -e 's|"RustDesk Remote Desktop"|"${{ inputs.appname }}"|' ./flutter/windows/runner/Runner.rc
+          sed -i -e 's|VALUE "InternalName", "rustdesk" "\0"|VALUE "InternalName", "${{ inputs.appname }}" "\0"|' ./flutter/windows/runner/Runner.rc
+          sed -i -e 's|"Copyright © 2024 Purslane Ltd. All rights reserved."|"Copyright © 2024"|' ./flutter/windows/runner/Runner.rc
+          sed -i -e 's|"rustdesk.exe"|"${{ inputs.filename }}"|' ./flutter/windows/runner/Runner.rc
+          sed -i -e 's|"RustDesk"|"${{ inputs.appname }}"|' ./flutter/windows/runner/Runner.rc
+          cp ./src/lang/en.rs ./src/lang/en.rs.bak
           sed -i -e 's|RustDesk|${{ inputs.appname }}|' ./src/lang/en.rs
-          #cp ./flutter/android/app/src/main/AndroidManifest.xml ./flutter/android/app/src/main/AndroidManifest.xml.bak
-          sed -i -e 's|android:label="RustDesk"|android:label="${{ inputs.appname }}"|' ./flutter/android/app/src/main/AndroidManifest.xml
-          sed -i -e 's|android:label="RustDesk Input"|android:label="${{ inputs.appname }} Input"|' ./flutter/android/app/src/main/AndroidManifest.xml
+          sed -i -e 's|Homepage: https://rustdesk.com|Homepage: ${{ fromJson(inputs.extras).urlLink }}|' ./build.py
+          sed -i -e "s|launchUrl(Uri.parse('https://rustdesk.com'));|launchUrl(Uri.parse('${{ fromJson(inputs.extras).urlLink }}'));|" ./flutter/lib/common.dart
+          sed -i -e "s|launchUrlString('https://rustdesk.com');|launchUrlString('${{ fromJson(inputs.extras).urlLink }}');|" ./flutter/lib/desktop/pages/desktop_setting_page.dart
+          sed -i -e "s|const url = 'https://rustdesk.com/';|const url = '${{ fromJson(inputs.extras).urlLink }}';|" ./flutter/lib/mobile/pages/settings_page.dart
+          sed -i -e '/const KEY:/,/};/d' ./src/common.rs
+          sed -i -e '/let Ok(data) = sign::verify(&data, &pk)/,/};/d' ./src/common.rs
           #cp ./flutter/android/app/src/main/res/values/strings.xml ./flutter/android/app/src/main/res/values/strings.xml.bak
           sed -i -e 's|<string name="app_name">RustDesk</string>|<string name="app_name">${{ inputs.appname }}</string>|' ./flutter/android/app/src/main/res/values/strings.xml
           sed -i -e 's|<string name="accessibility_service_description">Allow other devices to control your phone using virtual touch, when RustDesk screen sharing is established</string>|<string name="accessibility_service_description">Allow other devices to control your phone using virtual touch, when ${{ inputs.appname }} screen sharing is established</string>|' ./flutter/android/app/src/main/res/values/strings.xml
           sed -i -e "s|title: 'RustDesk',|title: '${{ inputs.appname }}',|" ./flutter/lib/main.dart
           sed -i -e "s|return 'RustDesk';|return '${{ inputs.appname }}';|" ./flutter/lib/web/bridge.dart
+
+      - name: fix connection delay
+        continue-on-error: true
+        if: ${{ fromJson(inputs.extras).delayFix == 'true' }}
+        shell: bash
+        run: |
+          sed -i -e '/if !key.is_empty() && !token.is_empty() {/,/}/d' ./src/client.rs
 
       - name: replace flutter icons
         run: |
