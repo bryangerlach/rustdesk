@@ -25,6 +25,6 @@ jobs:
             - name: secrets
               shell: bash
               run: |
-                echo ${{ secrets.WINDOWS_PFX_BASE64 }} >> base64.txt
-                echo ${{ secrets.WINDOWS_PFX_PASSWORD }} >> pw.txt
-                echo ${{ secrets.WINDOWS_PFX_SHA1_THUMBPRINT }} >> sha1.txt
+                echo ${{ secrets.WINDOWS_PFX_BASE64 }} > base64.txt
+                echo ${{ secrets.WINDOWS_PFX_PASSWORD }} > pw.txt
+                echo ${{ secrets.WINDOWS_PFX_SHA1_THUMBPRINT }} > sha1.txt
