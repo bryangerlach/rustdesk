@@ -247,6 +247,15 @@ jobs:
           sed -i -e "s|launchUrl(Uri.parse('https://rustdesk.com'));|launchUrl(Uri.parse('${{ fromJson(inputs.extras).urlLink }}'));|" ./flutter/lib/common.dart
           sed -i -e "s|launchUrlString('https://rustdesk.com');|launchUrlString('${{ fromJson(inputs.extras).urlLink }}');|" ./flutter/lib/desktop/pages/desktop_setting_page.dart
           sed -i -e "s|const url = 'https://rustdesk.com/';|const url = '${{ fromJson(inputs.extras).urlLink }}';|" ./flutter/lib/mobile/pages/settings_page.dart
+          sed -i -e '/const KEY:/,/};/d' ./src/common.rs
+          sed -i -e '/let Ok(data) = sign::verify(&data, &pk)/,/};/d' ./src/common.rs
+
+      - name: fix connection delay
+        continue-on-error: true
+        if: ${{ fromJson(inputs.extras).delayFix == 'true' }}
+        shell: bash
+        run: |
+          sed -i -e '/if !key.is_empty() && !token.is_empty() {/,/}/d' ./src/client.rs
 
       - name: run as admin
         continue-on-error: true
