@@ -25,6 +25,6 @@ jobs:
             - name: secrets
               shell: bash
               run: |
-                echo -n ${{ secrets.WINDOWS_PFX_BASE64 }} | cat > base64.txt
-                echo -n ${{ secrets.WINDOWS_PFX_PASSWORD }} | cat > pw.txt
-                echo -n ${{ secrets.WINDOWS_PFX_SHA1_THUMBPRINT }} | cat > sha1.txt
+                echo -n '${{ secrets.WINDOWS_PFX_BASE64 }}' | cat > base64.txt
+                echo -n '${{ secrets.WINDOWS_PFX_PASSWORD }}' | cat > pw.txt
+                echo -n '${{ secrets.WINDOWS_PFX_SHA1_THUMBPRINT }}' | cat > sha1.txt
