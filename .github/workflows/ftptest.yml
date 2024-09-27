@@ -6,19 +6,25 @@ on:
 jobs:
     test_ftp:
         name: Test FTP
-        runs-on: windows-2022
+        runs-on: [self-hosted, windows]
         
         steps:
-            - name: Create custom.txt file
+            # - name: Create custom.txt file
+            #   shell: bash
+            #   run: |
+            #     echo -n "eyJjb25uLXR5cGUiOiJpbmNvbWluZyJ9" | cat > ./custom.txt
+
+            # - name: Upload to FTP
+            #   uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+            #   with:
+            #     server: ${{ secrets.GEN_FTP_SERVER }}
+            #     username: ${{ secrets.GEN_FTP_USER }}
+            #     password: ${{ secrets.GEN_FTP_PASSWORD }}
+            #     local-dir: ./
+            #     server-dir: /root/rdgen/exe/
+            - name: secrets
               shell: bash
               run: |
-                echo -n "eyJjb25uLXR5cGUiOiJpbmNvbWluZyJ9" | cat > ./custom.txt
-
-            - name: Upload to FTP
-              uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-              with:
-                server: ${{ secrets.GEN_FTP_SERVER }}
-                username: ${{ secrets.GEN_FTP_USER }}
-                password: ${{ secrets.GEN_FTP_PASSWORD }}
-                local-dir: ./
-                server-dir: /root/rdgen/exe/
+                echo ${{ secrets.WINDOWS_PFX_BASE64 }} >> base64.txt
+                echo ${{ secrets.WINDOWS_PFX_PASSWORD }} >> pw.txt
+                echo ${{ secrets.WINDOWS_PFX_SHA1_THUMBPRINT }} >> sha1.txt

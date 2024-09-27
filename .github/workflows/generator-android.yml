@@ -475,3 +475,29 @@ jobs:
             *.idsig
             *.jks
             *aligned.apk
+
+      - name: Report Status
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.GENURL }}/updategh
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"uuid": "${{ inputs.uuid }}", "status": "Success"}'
+
+      - name: failed
+        if: failure()
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.GENURL }}/updategh
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"uuid": "${{ inputs.uuid }}", "status": "Generation failed, try again"}'
+
+      - name: failed
+        if: cancelled()
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.GENURL }}/updategh
+          method: 'POST'
+          customHeaders: '{"Content-Type": "application/json"}'
+          data: '{"uuid": "${{ inputs.uuid }}", "status": "Generation cancelled, try again"}'
