@@ -13,6 +13,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.ClipboardManager
+import android.os.Bundle
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
@@ -30,16 +32,15 @@ import com.hjq.permissions.XXPermissions
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
-import io.flutter.embedding.engine.plugins.FlutterPlugin
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import io.flutter.plugin.common.MethodChannel.Result
 import kotlin.concurrent.thread
 
 
 class MainActivity : FlutterActivity() {
     companion object {
         var flutterMethodChannel: MethodChannel? = null
+        private var _rdClipboardManager: RdClipboardManager? = null
+        val rdClipboardManager: RdClipboardManager?
+            get() = _rdClipboardManager;
     }
 
     private val channelTag = "mChannel"
@@ -61,7 +62,6 @@ class MainActivity : FlutterActivity() {
             channelTag
         )
         initFlutterChannel(flutterMethodChannel!!)
-        flutterEngine.plugins.add(ContextPlugin())
         thread { setCodecInfo() }
     }
 
@@ -90,11 +90,20 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        if (_rdClipboardManager == null) {
+            _rdClipboardManager = RdClipboardManager(getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
+            FFI.setClipboardManager(_rdClipboardManager!!)
+        }
+    }
+
     override fun onDestroy() {
         Log.e(logTag, "onDestroy")
         mainService?.let {
             unbindService(serviceConnection)
         }
+        rdClipboardManager?.rustEnableServiceClipboard(false)
         super.onDestroy()
     }
 
@@ -393,17 +402,13 @@ class MainActivity : FlutterActivity() {
         super.onStart()
         stopService(Intent(this, FloatingWindowService::class.java))
     }
-}
 
-// https://cjycode.com/flutter_rust_bridge/guides/how-to/ndk-init
-class ContextPlugin : FlutterPlugin, MethodCallHandler {
-    override fun onAttachedToEngine(flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        FFI.initContext(flutterPluginBinding.applicationContext)
-    }
-    override fun onMethodCall(call: MethodCall, result: Result) {
-        result.notImplemented()
-    }
-
-    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+    // For client side
+    // When swithing from other app to this app, try to sync clipboard.
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) {
+            rdClipboardManager?.syncClipboard(true)
+        }
     }
 }
