@@ -849,14 +849,21 @@ jobs:
       #     files: |
       #       rustdesk*-${{ matrix.job.arch }}.dmg
 
-      - name: Upload to FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
-          server-dir: macOS/
+      # - name: Upload to FTP
+      #   uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      #   with:
+      #     server: ${{ secrets.FTP_SERVER }}
+      #     username: ${{ secrets.FTP_USERNAME }}
+      #     password: ${{ secrets.FTP_PASSWORD }}
+      #     local-dir: ./
+      #     server-dir: macOS/
+
+      - name: upload to ftp
+        run: |
+          ftp_server="ftp://${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}@${{ secrets.FTP_SERVER }}/macOS"
+          for file in *.dmg; do
+            curl -T "$file" "$ftp_server/$file"
+          done
 
   # publish_unsigned:
   #   needs:
@@ -1693,14 +1700,21 @@ jobs:
                 mv "$name" /workspace/"${name%%.rpm}-suse.rpm"
             done
 
-      - name: Upload to FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: output/
-          server-dir: linux/${{ matrix.job.arch }}/
+      # - name: Upload to FTP
+      #   uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      #   with:
+      #     server: ${{ secrets.FTP_SERVER }}
+      #     username: ${{ secrets.FTP_USERNAME }}
+      #     password: ${{ secrets.FTP_PASSWORD }}
+      #     local-dir: output/
+      #     server-dir: linux/${{ matrix.job.arch }}/
+
+      - name: upload to ftp
+        run: |
+          ftp_server="ftp://${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}@${{ secrets.FTP_SERVER }}/linux/${{ matrix.job.arch }}"
+          for file in *.deb *.rpm; do
+            curl -T "$file" "$ftp_server/$file"
+          done
 
       # - name: Upload deb
       #   uses: actions/upload-artifact@master
@@ -1935,14 +1949,21 @@ jobs:
               cp "$name" "${name%%.deb}-${{ matrix.job.arch }}-sciter.deb"
           done
 
-      - name: Upload to FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: output/
-          server-dir: linux-sciter/${{ matrix.job.arch }}/
+      # - name: Upload to FTP
+      #   uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      #   with:
+      #     server: ${{ secrets.FTP_SERVER }}
+      #     username: ${{ secrets.FTP_USERNAME }}
+      #     password: ${{ secrets.FTP_PASSWORD }}
+      #     local-dir: output/
+      #     server-dir: linux-sciter/${{ matrix.job.arch }}/
+
+      - name: upload to ftp
+        run: |
+          ftp_server="ftp://${{ secrets.FTP_USERNAME }}:${{ secrets.FTP_PASSWORD }}@${{ secrets.FTP_SERVER }}/linux-sciter/${{ matrix.job.arch }}"
+          for file in *.deb *.rpm; do
+            curl -T "$file" "$ftp_server/$file"
+          done
 
       # - name: Upload deb
       #   uses: actions/upload-artifact@master
