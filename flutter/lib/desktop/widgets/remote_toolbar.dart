@@ -437,6 +437,7 @@ class _RemoteToolbarState extends State<RemoteToolbar> {
             borderRadius: borderRadius,
             child: _DraggableShowHide(
               id: widget.id,
+              ffi: widget.ffi,
               sessionId: widget.ffi.sessionId,
               dragging: _dragging,
               fractionX: _fractionX,
@@ -2234,6 +2235,7 @@ class RdoMenuButton<T> extends StatelessWidget {
 
 class _DraggableShowHide extends StatefulWidget {
   final String id;
+  final FFI ffi;
   final SessionID sessionId;
   final RxDouble fractionX;
   final RxBool dragging;
@@ -2246,6 +2248,7 @@ class _DraggableShowHide extends StatefulWidget {
   const _DraggableShowHide({
     Key? key,
     required this.id,
+    required this.ffi,
     required this.sessionId,
     required this.fractionX,
     required this.dragging,
@@ -2357,6 +2360,7 @@ class _DraggableShowHideState extends State<_DraggableShowHide> {
       mainAxisSize: MainAxisSize.min,
       children: [
         _buildDraggable(context),
+        _CycleMonitorMenu(id: widget.id, ffi: widget.ffi),
         Obx(() => buttonWrapper(
               () {
                 widget.setFullscreen(!isFullscreen.value);
