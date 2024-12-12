@@ -1328,8 +1328,13 @@ Widget getOnline(double rightPadding, bool online) {
       waitDuration: const Duration(seconds: 1),
       child: Padding(
           padding: EdgeInsets.fromLTRB(0, 4, rightPadding, 4),
-          child: CircleAvatar(
-              radius: 3, backgroundColor: online ? Colors.green : kColorWarn)));
+          child: online
+              ? CircleAvatar(radius: 3, backgroundColor: Colors.green)
+              : Icon(
+                  Icons.close, // Red X for offline (Material Icon)
+                  color: Colors.red,
+                  size: 30.0, // Adjust size as needed
+                )));
 }
 
 Widget build_more(BuildContext context, {bool invert = false}) {
