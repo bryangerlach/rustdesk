@@ -1333,7 +1333,7 @@ Widget getOnline(double rightPadding, bool online) {
               : Icon(
                   Icons.close, // Red X for offline (Material Icon)
                   color: Colors.red,
-                  size: 30.0, // Adjust size as needed
+                  size: 6.0, // Adjust size as needed
                 )));
 }
 
